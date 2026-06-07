@@ -1,0 +1,65 @@
+# ── Python ───────────────────────────────────────────────────────────────────
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.egg
+*.egg-info/
+dist/
+build/
+
+# ── Virtual environment ───────────────────────────────────────────────────────
+.venv/
+venv/
+env/
+
+# ── Data (too large for git) ──────────────────────────────────────────────────
+data/raw/
+data/processed/
+data/tmp/
+data/synthetic/
+data/model_input/
+
+# Context: keep directory structure, exclude large/regenerable files
+data/context/weather/
+data/context/topography/
+data/context/urban_form/
+data/context/**/*.parquet
+
+# ── Artifacts ─────────────────────────────────────────────────────────────────
+# Exclude large/regenerable experiment outputs
+artifacts/oracle_london/
+
+# Keep small reproducibility artifacts
+!artifacts/model_input/
+!artifacts/model_input/final_feature_columns_*.json
+!artifacts/model_input/continuous_scaler_*.joblib
+!artifacts/data_quality/
+!artifacts/data_quality/data_quality_report.csv
+
+# ── Jupyter ───────────────────────────────────────────────────────────────────
+.ipynb_checkpoints/
+**/.ipynb_checkpoints/
+
+# ── IDE ───────────────────────────────────────────────────────────────────────
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# ── OS ────────────────────────────────────────────────────────────────────────
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# ── Office temp files ─────────────────────────────────────────────────────────
+~$*.docx
+~$*.xlsx
+~WRL*.tmp
+
+# ── Claude Code ───────────────────────────────────────────────────────────────
+.claude/
+
+# ── Misc ─────────────────────────────────────────────────────────────────────
+cache/
+*.log

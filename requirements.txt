@@ -1,0 +1,29 @@
+# ── Core data processing ─────────────────────────────────────────────────────
+duckdb==1.5.2
+pandas==2.3.3
+numpy==1.26.4
+pyarrow==24.0.0
+scipy==1.17.1
+
+# ── ML / preprocessing ───────────────────────────────────────────────────────
+scikit-learn==1.8.0
+joblib==1.5.3
+
+# ── Generative model ─────────────────────────────────────────────────────────
+synthcity==0.2.12
+# opacus pinned to 1.4.0: versions 1.5+ use torch.nn.RMSNorm which requires
+# PyTorch >= 2.4, but synthcity constrains torch to <2.3
+opacus==1.4.0
+torch==2.2.2
+
+# ── Weather data ─────────────────────────────────────────────────────────────
+meteostat==2.1.4
+
+# ── Notebooks ────────────────────────────────────────────────────────────────
+jupyter==1.1.1
+ipykernel==7.2.0
+jupyterlab==4.5.7
+
+# ── Utilities ────────────────────────────────────────────────────────────────
+openpyxl==3.1.5
+lxml==6.1.0
