@@ -3,7 +3,10 @@ import duckdb
 import glob
 
 RAW_DIR = Path("data/raw")
+# (lat_min, lat_max, lng_min, lng_max)Εκατοστημόρια 0,01–99,99% των συντεταγμένων των διαδρομών με σταθμό, στρογγυλεμένα προς τα έξω.
 PROCESSED_DIR = Path("data/processed")
+CITY_BBOX={"chicago":(41.60,42.10,-87.90,-87.50),
+           "nyc":(40.60,40.92,-74.10,-73.80)} 
 TMP_DIR = Path("data/tmp")
 
 
@@ -13,6 +16,7 @@ def sql_string(path: str | Path) -> str:
 
 
 def _feature_query(escaped_files: str, city: str, distinct: str, out_path: Path) -> str:
+    lat_min, lat_max, lng_min, lng_max = CITY_BBOX[city]
     return f"""
     COPY (
         WITH typed_data AS (
@@ -20,8 +24,10 @@ def _feature_query(escaped_files: str, city: str, distinct: str, out_path: Path)
                 CAST(rideable_type AS VARCHAR) AS rideable_type,
                 TRY_CAST(started_at AS TIMESTAMP) AS started_at,
                 TRY_CAST(ended_at AS TIMESTAMP) AS ended_at,
-                CAST(start_station_id AS VARCHAR) AS start_station_id,
-                CAST(end_station_id AS VARCHAR) AS end_station_id,
+                TRIM(CAST(start_station_id AS VARCHAR)) AS start_station_id,
+                TRIM(CAST(end_station_id AS VARCHAR)) AS end_station_id,
+                CAST(start_station_name AS VARCHAR) AS start_station_name,
+                CAST(end_station_name AS VARCHAR) AS end_station_name,
                 TRY_CAST(start_lat AS DOUBLE) AS start_lat,
                 TRY_CAST(start_lng AS DOUBLE) AS start_lng,
                 TRY_CAST(end_lat AS DOUBLE) AS end_lat,
@@ -38,14 +44,14 @@ def _feature_query(escaped_files: str, city: str, distinct: str, out_path: Path)
             FROM typed_data
             WHERE started_at IS NOT NULL
               AND ended_at IS NOT NULL
-              AND start_lat IS NOT NULL
-              AND start_lng IS NOT NULL
-              AND end_lat IS NOT NULL
-              AND end_lng IS NOT NULL
-              AND start_lat BETWEEN -90 AND 90
-              AND start_lng BETWEEN -180 AND 180
-              AND end_lat BETWEEN -90 AND 90
-              AND end_lng BETWEEN -180 AND 180
+              AND start_station_id IS NOT NULL AND TRIM(start_station_id) <> ''
+              AND end_station_id IS NOT NULL AND TRIM(end_station_id) <> ''
+              AND COALESCE(start_station_name,'') NOT ILIKE '%public rack%'
+              AND COALESCE(end_station_name,'') NOT ILIKE '%public rack%'
+              AND start_lat BETWEEN {lat_min} AND {lat_max}
+              AND start_lng BETWEEN {lng_min} AND {lng_max}
+              AND end_lat BETWEEN {lat_min} AND {lat_max}
+              AND end_lng BETWEEN {lng_min} AND {lng_max}
         ),
         base_features AS (
             SELECT
@@ -97,6 +103,8 @@ def _feature_query(escaped_files: str, city: str, distinct: str, out_path: Path)
                 rideable_type,
                 started_at,
                 ended_at,
+                start_station_id,
+                end_station_id,
                 start_lat,
                 start_lng,
                 end_lat,
@@ -132,6 +140,8 @@ def _feature_query(escaped_files: str, city: str, distinct: str, out_path: Path)
             rideable_type,
             started_at,
             ended_at,
+            start_station_id,
+            end_station_id,
             start_lat,
             start_lng,
             end_lat,
@@ -154,6 +164,7 @@ def _feature_query(escaped_files: str, city: str, distinct: str, out_path: Path)
             SIN(RADIANS(bearing)) AS bearing_sin,
             COS(RADIANS(bearing)) AS bearing_cos
         FROM engineered_data
+        ORDER BY started_at, start_station_id, end_station_id, ended_at
     )
     TO '{sql_string(out_path)}'
     (FORMAT PARQUET, COMPRESSION ZSTD);
@@ -165,6 +176,53 @@ def _run_query(query: str) -> None:
     try:
         con.execute(f"SET temp_directory='{sql_string(TMP_DIR)}'")
         con.execute(query)
+    finally:
+        con.close()
+
+
+def cleaning_report(city: str) -> None:
+    """Διαδοχικά πλήθη ανά κανόνα καθαρισμού, για τον πίνακα ροής δεδομένων.
+    Εφαρμόζει τους ίδιους κανόνες με το _feature_query. Δεν γράφει τίποτα."""
+    lat_min, lat_max, lng_min, lng_max = CITY_BBOX[city]
+    src = f"read_parquet('{sql_string(RAW_DIR / city)}/*.parquet', union_by_name=true)"
+
+    con = duckdb.connect()
+    try:
+        con.execute(f"SET temp_directory='{sql_string(TMP_DIR)}'")
+        print(f"\n===== Cleaning report: {city} =====")
+        print(con.sql(f"""
+            WITH t AS (
+                SELECT TRY_CAST(started_at AS TIMESTAMP)        AS s,
+                       TRY_CAST(ended_at   AS TIMESTAMP)        AS e,
+                       TRIM(CAST(start_station_id AS VARCHAR))  AS ss,
+                       TRIM(CAST(end_station_id   AS VARCHAR))  AS es,
+                       COALESCE(CAST(start_station_name AS VARCHAR), '') AS sn,
+                       COALESCE(CAST(end_station_name   AS VARCHAR), '') AS en,
+                       TRY_CAST(start_lat AS DOUBLE) AS slat,
+                       TRY_CAST(start_lng AS DOUBLE) AS slng,
+                       TRY_CAST(end_lat   AS DOUBLE) AS elat,
+                       TRY_CAST(end_lng   AS DOUBLE) AS elng
+                FROM {src}
+            )
+            SELECT
+                COUNT(*) AS step0_raw,
+                COUNT(*) FILTER (WHERE s IS NOT NULL AND e IS NOT NULL) AS step1_valid_time,
+                COUNT(*) FILTER (WHERE s IS NOT NULL AND e IS NOT NULL
+                                   AND ss <> '' AND es <> '') AS step2_with_station,
+                COUNT(*) FILTER (WHERE s IS NOT NULL AND e IS NOT NULL
+                   AND ss <> '' AND es <> ''
+                   AND sn NOT ILIKE '%public rack%'
+                   AND en NOT ILIKE '%public rack%') AS step3_no_public_rack,
+                COUNT(*) FILTER (WHERE s IS NOT NULL AND e IS NOT NULL
+                   AND ss <> '' AND es <> ''
+                   AND sn NOT ILIKE '%public rack%'
+                   AND en NOT ILIKE '%public rack%'
+                   AND slat BETWEEN {lat_min} AND {lat_max}
+                   AND slng BETWEEN {lng_min} AND {lng_max}
+                   AND elat BETWEEN {lat_min} AND {lat_max}
+                   AND elng BETWEEN {lng_min} AND {lng_max}) AS step4_in_bbox
+            FROM t
+        """).df().T.to_string(header=False))
     finally:
         con.close()
 
@@ -204,7 +262,8 @@ def build_city_featured_parquet(city: str, remove_duplicates: bool = False, batc
         con = duckdb.connect()
         try:
             con.execute(f"""
-                COPY (SELECT * FROM read_parquet([{escaped_batches}]))
+                COPY (SELECT * FROM read_parquet([{escaped_batches}])
+                ORDER BY started_at, start_station_id, end_station_id, ended_at)
                 TO '{sql_string(output_path)}'
                 (FORMAT PARQUET, COMPRESSION ZSTD)
             """)
@@ -218,5 +277,8 @@ def build_city_featured_parquet(city: str, remove_duplicates: bool = False, batc
 
 
 if __name__ == "__main__":
+    TMP_DIR.mkdir(parents=True, exist_ok=True)
+    cleaning_report("chicago")
     build_city_featured_parquet("chicago")
+    cleaning_report("nyc")
     build_city_featured_parquet("nyc")
