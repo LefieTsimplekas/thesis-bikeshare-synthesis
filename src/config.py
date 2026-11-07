@@ -25,3 +25,8 @@ MIN_CLASSIC_FOR_POSITION = 20    # θέση μόνο από classic αν υπά�
 TARGET_ROWS = 1_000_000
 STRATA_COLS = ["month", "rideable_type", "part_of_day", "is_weekend"]
 SAMPLING_SEED = 42
+
+# Λονδίνο: IDs που επαναχρησιμοποιήθηκαν για άλλον σταθμό μετά το 2025.
+# Η θέση του BikePoint δεν αντιστοιχεί στις διαδρομές του 2025.
+#   001058: διαδρομές "Edgware Road Station, Marylebone", BikePoint "Orchard Place, Blackwall Tunnel"
+LONDON_INVALID_STATION_IDS = ["001058"]
