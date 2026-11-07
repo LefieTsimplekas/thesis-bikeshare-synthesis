@@ -1,6 +1,9 @@
 from pathlib import Path
 import duckdb
 
+from config import PROCESSED_DIR, TMP_DIR, STRATA_COLS, SAMPLING_SEED
+from config import TARGET_ROWS as TARGET_ROWS_PER_CITY
+
 """
 Validate strata and create sampled datasets for synthetic data training.
 
@@ -8,32 +11,12 @@ This script:
 1. Loads filtered datasets per city
 2. Reports useful strata diagnostics before sampling
 3. Applies stratified sampling with an exact target row count per city
-4. Saves per-city samples and a merged combined dataset
+4. Saves per-city samples (the mixed scenario-C set is built after the day split)
 
 Outputs:
 - data/processed/chicago_sampled.parquet
 - data/processed/nyc_sampled.parquet
-- data/processed/chicago_nyc_sampled.parquet
 """
-
-PROCESSED_DIR = Path("data/processed")
-TMP_DIR = Path("data/tmp")
-
-# Θέλουμε ίδιο τελικό πλήθος γραμμών ανά πόλη, ώστε το training dataset να μην
-# κυριαρχείται από την πόλη με τα περισσότερα raw δεδομένα.
-TARGET_ROWS_PER_CITY = 1_000_000
-
-# Τα strata είναι οι ομάδες πάνω στις οποίες γίνεται η αναλογική δειγματοληψία.
-# Έτσι το sample κρατά παρόμοια κατανομή σε μήνα, τύπο ποδηλάτου, τύπο χρήστη,
-# περίοδο ημέρας και weekend/weekday.
-STRATA_COLS = [
-    "month",
-    "rideable_type",
-    "part_of_day",
-    "is_weekend",
-]
-
-
 def sql_string(path: Path) -> str:
     # DuckDB paths μπαίνουν μέσα σε single quotes, άρα κάνουμε escape τυχόν '.
     return path.as_posix().replace("'", "''")
@@ -88,7 +71,7 @@ def print_city_strata_report(city: str, target_rows: int) -> None:
 
 
 def _build_allocation_table(input_path: Path, target_rows: int) -> Path:
-    """Pre-compute exact per-stratum row counts and save as a small parquet (384 rows)."""
+    """Pre-compute exact per-stratum row counts and save as a small parquet (192 rows)."""
     strata_cols_sql = ", ".join(STRATA_COLS)
     allocation_path = TMP_DIR / f"{input_path.stem}_allocation.parquet"
     input_sql = sql_string(input_path)
@@ -166,7 +149,11 @@ def _sample_city(input_path: Path, target_rows: int, output_path: Path) -> None:
             WITH sampled AS (
                 SELECT d.*,
                     a.target_in_stratum,
-                    ROW_NUMBER() OVER (PARTITION BY {partition_sql} ORDER BY RANDOM()) AS rn
+                    ROW_NUMBER() OVER (
+                        PARTITION BY {partition_sql}
+                        ORDER BY hash(d.started_at, d.start_station_id, d.end_station_id, d.trip_duration, {SAMPLING_SEED}),
+                            d .started_at, d.start_station_id, d.end_station_id, d.trip_duration
+                    ) AS rn
                 FROM read_parquet('{sql_string(input_path)}') d
                 JOIN read_parquet('{sql_string(allocation_path)}') a ON {join_condition}
                 WHERE d.month = {month}
@@ -182,7 +169,6 @@ def _sample_city(input_path: Path, target_rows: int, output_path: Path) -> None:
         con = duckdb.connect()
         try:
             con.execute(f"SET temp_directory='{sql_string(tmp_dir)}'")
-            con.execute("SELECT setseed(0.42)")
             con.execute(query)
         finally:
             con.close()
@@ -194,7 +180,8 @@ def _sample_city(input_path: Path, target_rows: int, output_path: Path) -> None:
     con = duckdb.connect()
     try:
         con.execute(f"""
-            COPY (SELECT * FROM read_parquet([{escaped}]))
+            COPY (SELECT * FROM read_parquet([{escaped}])
+                ORDER BY started_at, start_station_id, end_station_id, trip_duration)
             TO '{sql_string(output_path)}'
             (FORMAT PARQUET, COMPRESSION ZSTD)
         """)
@@ -205,17 +192,30 @@ def _sample_city(input_path: Path, target_rows: int, output_path: Path) -> None:
     for p in month_outputs:
         p.unlink(missing_ok=True)
 
+def representativeness_report(city: str, sample_path: Path) -> None:
+    pop = f"read_parquet('{sql_string(get_filtered_path(city))}')"
+    smp = f"read_parquet('{sql_string(sample_path)}')"
+    con = duckdb.connect()
+    try:
+        print(f"\n--- Representativeness: {city} (TVD, sample vs population) ---")
+        for col in STRATA_COLS + ["hour", "day_of_week", "same_station"]:
+            tvd = con.execute(f"""
+                WITH p AS (SELECT {col} AS v, COUNT(*) * 1.0 / SUM(COUNT(*)) OVER () AS f FROM {pop} GROUP BY 1),
+                     s AS (SELECT {col} AS v, COUNT(*) * 1.0 / SUM(COUNT(*)) OVER () AS f FROM {smp} GROUP BY 1)
+                SELECT 0.5 * SUM(ABS(COALESCE(p.f, 0) - COALESCE(s.f, 0)))
+                FROM p FULL OUTER JOIN s USING (v)
+            """).fetchone()[0]
+            print(f"  {col:<15} {tvd:.5f}")
 
-def report_sampled_city(con: duckdb.DuckDBPyConnection, output_path: Path) -> None:
-    city_query = f"""
-    SELECT city, COUNT(*) AS n_rows
-    FROM read_parquet('{sql_string(output_path)}')
-    GROUP BY city
-    ORDER BY city
-    """
-    print("\n--- Sampled rows per city ---")
-    print(con.execute(city_query).fetchdf())
-
+        print("\n  Quantiles (population vs sample):")
+        for col in ["trip_duration", "haversine_distance_km"]:
+            q = "[0.05, 0.25, 0.5, 0.75, 0.95]"
+            qp = con.execute(f"SELECT quantile_cont({col}, {q}) FROM {pop}").fetchone()[0]
+            qs = con.execute(f"SELECT quantile_cont({col}, {q}) FROM {smp}").fetchone()[0]
+            print(f"  {col:<22} pop {[round(x, 2) for x in qp]}")
+            print(f"  {'':<22} smp {[round(x, 2) for x in qs]}")
+    finally:
+        con.close()
 
 def create_sampled_datasets() -> None:
     city_names = ["chicago", "nyc"]
@@ -229,35 +229,15 @@ def create_sampled_datasets() -> None:
     for city_name in city_names:
         print_city_strata_report(city_name, TARGET_ROWS_PER_CITY)
 
-    city_paths = []
     for city_name in city_names:
-        out = PROCESSED_DIR / f"{city_name}_sampled.parquet"
-        city_paths.append(out)
+        out = PROCESSED_DIR / f"{city_name}_sampled_run1.parquet"
         print(f"\nSampling {city_name}...")
         _sample_city(get_filtered_path(city_name), TARGET_ROWS_PER_CITY, out)
         print(f"  Saved to: {out}")
+        representativeness_report(city_name, out)
 
-    merged_path = PROCESSED_DIR / "chicago_nyc_sampled.parquet"
-    print("\nMerging city samples -> chicago_nyc_sampled...")
-    escaped = ", ".join(f"'{sql_string(p)}'" for p in city_paths)
-    con = duckdb.connect()
-    try:
-        con.execute(f"""
-            COPY (SELECT * FROM read_parquet([{escaped}]))
-            TO '{sql_string(merged_path)}'
-            (FORMAT PARQUET, COMPRESSION ZSTD)
-        """)
-
-        final_rows = con.execute(
-            f"SELECT COUNT(*) FROM read_parquet('{sql_string(merged_path)}')"
-        ).fetchone()[0]
-
-        report_sampled_city(con, merged_path)
-        print(f"\nFinal merged rows: {final_rows}")
-        print(f"Expected: {TARGET_ROWS_PER_CITY * len(city_names)}")
-        print(f"Saved to: {merged_path}")
-    finally:
-        con.close()
+    # Το μικτό σύνολο του σεναρίου C (N/2 + N/2) δημιουργείται μετά το split
+    # ανά ημέρες, από τα train κάθε πόλης, ώστε να έχει το ίδιο N με τα A και B.
 
 
 if __name__ == "__main__":
