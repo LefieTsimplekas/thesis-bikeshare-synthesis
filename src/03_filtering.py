@@ -1,5 +1,6 @@
 from pathlib import Path
 import duckdb
+from config import (PROCESSED_DIR, TMP_DIR,MIN_TRIP_DURATION_MIN, MAX_TRIP_DURATION_MIN,MIN_MOVING_DISTANCE_KM, MAX_TRIP_DISTANCE_KM,MAX_SPEED_KMH,)
 
 """
 Filter the feature-engineered bike trips dataset.
@@ -13,17 +14,6 @@ Output:
 - data/processed/nyc_filtered.parquet
 """
 
-PROCESSED_DIR = Path("data/processed")
-
-# Filtering thresholds.
-# Κρατάμε διαδρομές με ρεαλιστική διάρκεια και απόσταση, ώστε το μοντέλο να μη
-# μάθει ακραίες ή προβληματικές εγγραφές από τα raw δεδομένα.
-MIN_TRIP_DURATION_MIN = 1.0
-MAX_TRIP_DURATION_MIN = 100.0
-MIN_MOVING_DISTANCE_KM = 0.05
-MAX_TRIP_DISTANCE_KM = 12.0
-
-
 def sql_string(path: Path) -> str:
     # DuckDB paths μπαίνουν μέσα σε single quotes, άρα κάνουμε escape τυχόν '.
     return path.as_posix().replace("'", "''")
@@ -32,7 +22,7 @@ def sql_string(path: Path) -> str:
 def process_city(city_name: str) -> None:
     # Input: το feature-engineered αρχείο από το προηγούμενο βήμα.
     # Output: το φιλτραρισμένο αρχείο που θα χρησιμοποιηθεί στη δειγματοληψία.
-    input_path = PROCESSED_DIR / f"{city_name}_featured.parquet"
+    input_path = PROCESSED_DIR / f"{city_name}_keyed.parquet"
     output_path = PROCESSED_DIR / f"{city_name}_filtered.parquet"
 
     if not input_path.exists():
@@ -45,6 +35,7 @@ def process_city(city_name: str) -> None:
     # Χρησιμοποιούμε DuckDB για να φιλτράρουμε μεγάλα parquet files χωρίς να τα
     # φορτώσουμε ολόκληρα σε pandas memory.
     con = duckdb.connect()
+    con.execute(f"SET temp_directory='{sql_string(TMP_DIR)}'")
 
     try:
         print(f"\n{'=' * 50}")
@@ -60,42 +51,22 @@ def process_city(city_name: str) -> None:
         initial_rows = con.execute(count_query).fetchone()[0]
         print(f"Rows before filtering: {initial_rows}")
 
+        dur_ok   = f"trip_duration > {MIN_TRIP_DURATION_MIN} AND trip_duration < {MAX_TRIP_DURATION_MIN}"
+        mind_ok  = f"(haversine_distance_km > {MIN_MOVING_DISTANCE_KM} OR same_station = 1)"
+        maxd_ok  = f"haversine_distance_km < {MAX_TRIP_DISTANCE_KM}"
+        speed_ok = f"(same_station = 1 OR haversine_distance_km * 60 <= {MAX_SPEED_KMH} * trip_duration)"
+
         # Diagnostic report: δεν φιλτράρει ακόμα τα δεδομένα.
         # Μετράει πόσες εγγραφές θα πιαστούν από κάθε κανόνα, για να ξέρουμε
         # αν οι κανόνες είναι λογικοί ή αν αφαιρούν υπερβολικά πολλά rows.
         report_query = f"""
         SELECT
-            COUNT(*) AS total_rows,
-            -- Πολύ μικρή διάρκεια: πιθανό λάθος ή μη χρήσιμη εγγραφή.
-            SUM(CASE WHEN trip_duration <= {MIN_TRIP_DURATION_MIN} THEN 1 ELSE 0 END) AS too_short_duration,
-            -- Πολύ μεγάλη διάρκεια: πιθανό outlier για training.
-            SUM(CASE WHEN trip_duration >= {MAX_TRIP_DURATION_MIN} THEN 1 ELSE 0 END) AS too_long_duration,
-            -- Πολύ μικρή απόσταση χωρίς ίδια στάση: ύποπτη εγγραφή.
-            SUM(CASE
-                    WHEN haversine_distance_km <= {MIN_MOVING_DISTANCE_KM} AND same_station = 0
-                    THEN 1 ELSE 0
-                END) AS near_zero_non_same_station,
-            -- Πολύ μικρή απόσταση με ίδια στάση: την αναγνωρίζουμε ξεχωριστά,
-            -- γιατί μπορεί να είναι πραγματική round-trip/return συμπεριφορά.
-            SUM(CASE
-                    WHEN haversine_distance_km <= {MIN_MOVING_DISTANCE_KM} AND same_station = 1
-                    THEN 1 ELSE 0
-                END) AS near_zero_same_station,
-            -- Πολύ μεγάλη ευθύγραμμη απόσταση.
-            SUM(CASE WHEN haversine_distance_km >= {MAX_TRIP_DISTANCE_KM} THEN 1 ELSE 0 END) AS too_long_distance,
-            -- Συνολικές γραμμές που δεν περνούν όλους τους κανόνες.
-            SUM(CASE
-                    WHEN NOT (
-                        trip_duration > {MIN_TRIP_DURATION_MIN}
-                        AND trip_duration < {MAX_TRIP_DURATION_MIN}
-                        AND (
-                            haversine_distance_km > {MIN_MOVING_DISTANCE_KM}
-                            OR same_station = 1
-                        )
-                        AND haversine_distance_km < {MAX_TRIP_DISTANCE_KM}
-                    )
-                    THEN 1 ELSE 0
-                END) AS total_rows_removed
+            COUNT(*)                                                                 AS step0_input,
+            COUNT(*) FILTER (WHERE trip_duration < 0)                                AS info_negative_duration,
+            COUNT(*) FILTER (WHERE {dur_ok})                                         AS step1_duration,
+            COUNT(*) FILTER (WHERE {dur_ok} AND {mind_ok})                           AS step2_min_distance,
+            COUNT(*) FILTER (WHERE {dur_ok} AND {mind_ok} AND {maxd_ok})             AS step3_max_distance,
+            COUNT(*) FILTER (WHERE {dur_ok} AND {mind_ok} AND {maxd_ok} AND {speed_ok}) AS step4_speed
         FROM read_parquet('{input_sql_path}')
         """
         report = con.execute(report_query).fetchdf()
@@ -108,6 +79,10 @@ def process_city(city_name: str) -> None:
             SELECT
                 rideable_type,
                 started_at,
+                start_station_id,
+                end_station_id,
+                start_station_key,
+                end_station_key,
                 member_casual,
                 city,
                 trip_duration,
@@ -123,18 +98,8 @@ def process_city(city_name: str) -> None:
                 bearing_cos,
                 hour
             FROM read_parquet('{input_sql_path}')
-            WHERE
-                -- Κρατάμε διαδρομές με διάρκεια μέσα στο αποδεκτό εύρος.
-                trip_duration > {MIN_TRIP_DURATION_MIN}
-                AND trip_duration < {MAX_TRIP_DURATION_MIN}
-                AND (
-                    -- Αν η απόσταση είναι σχεδόν μηδενική, την κρατάμε μόνο
-                    -- όταν είναι δηλωμένη ως same-station trip.
-                    haversine_distance_km > {MIN_MOVING_DISTANCE_KM}
-                    OR same_station = 1
-                )
-                -- Αφαιρούμε πολύ μεγάλες ευθύγραμμες αποστάσεις.
-                AND haversine_distance_km < {MAX_TRIP_DISTANCE_KM}
+            WHERE {dur_ok} AND {mind_ok} AND {maxd_ok} AND {speed_ok}
+            ORDER BY started_at, start_station_id, end_station_id, trip_duration
         )
         TO '{output_sql_path}'
         (FORMAT PARQUET, COMPRESSION ZSTD);
@@ -148,6 +113,20 @@ def process_city(city_name: str) -> None:
         FROM read_parquet('{output_sql_path}')
         """
         final_rows = con.execute(final_count_query).fetchone()[0]
+        corr = con.execute(f"""
+            WITH t AS (
+                SELECT trip_duration, haversine_distance_km,
+                       rank() OVER (ORDER BY trip_duration)         AS r_dur,
+                       rank() OVER (ORDER BY haversine_distance_km) AS r_dist
+                FROM read_parquet('{output_sql_path}')
+                WHERE same_station = 0
+            )
+            SELECT CORR(trip_duration, haversine_distance_km) AS pearson,
+                   CORR(r_dur, r_dist)                        AS spearman
+            FROM t
+        """).fetchdf()
+        print("\n--- Duration–distance correlation (non-round trips) ---")
+        print(corr)
 
         rows_removed = initial_rows - final_rows
         percentage_removed = (rows_removed / initial_rows) * 100 if initial_rows else 0.0
@@ -159,6 +138,7 @@ def process_city(city_name: str) -> None:
             f"Minimum distance kept for non-same-station trips: > {MIN_MOVING_DISTANCE_KM} km"
         )
         print(f"Maximum distance kept: < {MAX_TRIP_DISTANCE_KM} km")
+        print(f"Maximum speed kept for non-round trips: <= {MAX_SPEED_KMH} km/h")
 
         print("\n--- Diagnostic Report ---")
         print(report)
