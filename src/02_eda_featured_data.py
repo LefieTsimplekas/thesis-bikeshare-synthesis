@@ -1,20 +1,14 @@
 from pathlib import Path
 import duckdb
+from config import (PROCESSED_DIR, TMP_DIR, MIN_TRIP_DURATION_MIN, MAX_TRIP_DURATION_MIN, MIN_MOVING_DISTANCE_KM, MAX_TRIP_DISTANCE_KM, MAX_SPEED_KMH,)
 
-
-PROCESSED_DIR = Path("data/processed")
 
 FILES = [
-    str(PROCESSED_DIR / "chicago_featured.parquet"),
-    str(PROCESSED_DIR / "nyc_featured.parquet"),
+    str(PROCESSED_DIR / "chicago_keyed.parquet"),
+    str(PROCESSED_DIR / "nyc_keyed.parquet"),
 ]
 
 FILES_SQL = ", ".join(f"'{file}'" for file in FILES)
-
-MIN_TRIP_DURATION_MIN = 1.0
-MAX_TRIP_DURATION_MIN = 100.0
-MIN_MOVING_DISTANCE_KM = 0.05
-MAX_TRIP_DISTANCE_KM = 12.0
 
 
 def run_query(con: duckdb.DuckDBPyConnection, title: str, query: str) -> None:
@@ -27,7 +21,7 @@ def run_query(con: duckdb.DuckDBPyConnection, title: str, query: str) -> None:
 
 def main() -> None:
     con = duckdb.connect()
-    con.execute("SET temp_directory='data/tmp'")
+    con.execute(f"SET temp_directory='{TMP_DIR.as_posix()}'")
 
     parquet_source = f"read_parquet([{FILES_SQL}])"
     eda_source = f"""
@@ -71,13 +65,13 @@ def main() -> None:
     query_duration_percentiles = f"""
     SELECT
         city,
-        approx_quantile(trip_duration, 0.01) AS q01,
-        approx_quantile(trip_duration, 0.05) AS q05,
-        approx_quantile(trip_duration, 0.25) AS q25,
-        approx_quantile(trip_duration, 0.50) AS median,
-        approx_quantile(trip_duration, 0.75) AS q75,
-        approx_quantile(trip_duration, 0.95) AS q95,
-        approx_quantile(trip_duration, 0.99) AS q99
+        quantile_cont(trip_duration, 0.01) AS q01,
+        quantile_cont(trip_duration, 0.05) AS q05,
+        quantile_cont(trip_duration, 0.25) AS q25,
+        quantile_cont(trip_duration, 0.50) AS median,
+        quantile_cont(trip_duration, 0.75) AS q75,
+        quantile_cont(trip_duration, 0.95) AS q95,
+        quantile_cont(trip_duration, 0.99) AS q99
     FROM {parquet_source}
     GROUP BY city
     ORDER BY city
@@ -86,13 +80,13 @@ def main() -> None:
     query_distance_percentiles = f"""
     SELECT
         city,
-        approx_quantile(haversine_distance_km, 0.01) AS q01,
-        approx_quantile(haversine_distance_km, 0.05) AS q05,
-        approx_quantile(haversine_distance_km, 0.25) AS q25,
-        approx_quantile(haversine_distance_km, 0.50) AS median,
-        approx_quantile(haversine_distance_km, 0.75) AS q75,
-        approx_quantile(haversine_distance_km, 0.95) AS q95,
-        approx_quantile(haversine_distance_km, 0.99) AS q99
+        quantile_cont(haversine_distance_km, 0.01) AS q01,
+        quantile_cont(haversine_distance_km, 0.05) AS q05,
+        quantile_cont(haversine_distance_km, 0.25) AS q25,
+        quantile_cont(haversine_distance_km, 0.50) AS median,
+        quantile_cont(haversine_distance_km, 0.75) AS q75,
+        quantile_cont(haversine_distance_km, 0.95) AS q95,
+        quantile_cont(haversine_distance_km, 0.99) AS q99
     FROM {parquet_source}
     GROUP BY city
     ORDER BY city
@@ -334,6 +328,22 @@ def main() -> None:
     ORDER BY city, n_trips DESC, hour
     """
 
+    query_negative_duration = f"""
+    SELECT city, COUNT(*) FILTER (WHERE trip_duration < 0) AS negative_duration
+    FROM {parquet_source}
+    GROUP BY city ORDER BY city
+    """
+
+    query_speed = f"""
+    SELECT city, rideable_type,
+           COUNT(*) FILTER (WHERE haversine_distance_km / (trip_duration / 60) > {MAX_SPEED_KMH}) AS too_fast,
+           COUNT(*) AS n
+    FROM {parquet_source}
+    WHERE trip_duration > {MIN_TRIP_DURATION_MIN} AND trip_duration < {MAX_TRIP_DURATION_MIN}
+      AND haversine_distance_km < {MAX_TRIP_DISTANCE_KM} AND same_station = 0
+    GROUP BY ALL ORDER BY ALL
+    """
+
     queries = [
         ("Basic Summary Statistics", query_basic_summary),
         ("Trip Duration Percentiles", query_duration_percentiles),
@@ -355,6 +365,8 @@ def main() -> None:
         ("Cross-City Comparison", query_cross_city),
         ("Summary by User Type", query_user_type_summary),
         ("Top Peak Hours Per City", query_peak_hours),
+        ("Negative Durations", query_negative_duration),
+        ("Impossible Speeds", query_speed),
     ]
 
     for title, query in queries:

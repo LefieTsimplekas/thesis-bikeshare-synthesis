@@ -1,13 +1,7 @@
 from pathlib import Path
 import duckdb
 import glob
-
-RAW_DIR = Path("data/raw")
-# (lat_min, lat_max, lng_min, lng_max)Εκατοστημόρια 0,01–99,99% των συντεταγμένων των διαδρομών με σταθμό, στρογγυλεμένα προς τα έξω.
-PROCESSED_DIR = Path("data/processed")
-CITY_BBOX={"chicago":(41.60,42.10,-87.90,-87.50),
-           "nyc":(40.60,40.92,-74.10,-73.80)} 
-TMP_DIR = Path("data/tmp")
+from config import RAW_DIR, PROCESSED_DIR, TMP_DIR, CITY_BBOX
 
 
 def sql_string(path: str | Path) -> str:

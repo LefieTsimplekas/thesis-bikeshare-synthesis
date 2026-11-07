@@ -19,6 +19,8 @@ data/processed/
 data/tmp/
 data/synthetic/
 data/model_input/
+data/query.sql
+data/raw.zip
 
 # Context: keep directory structure, exclude large/regenerable files
 data/context/weather/
@@ -63,3 +65,11 @@ desktop.ini
 # ── Misc ─────────────────────────────────────────────────────────────────────
 cache/
 *.log
+# ── Literature ─────────────────────────────────────────────────────────────────────
+Literature/
+
+# ── Thesis ─────────────────────────────────────────────────────────────────────
+Thesis/
+
+# ── Notes ─────────────────────────────────────────────────────────────────────
+Σημειωσεις/
