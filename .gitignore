@@ -15,7 +15,10 @@ env/
 
 # ── Data (too large for git) ──────────────────────────────────────────────────
 data/raw/
-data/processed/
+# processed: εξαιρούνται τα δεδομένα, κρατιούνται τα μικρά manifests των splits
+# (ημέρες και SHA-256 του κλειδωμένου London test) για αναπαραγωγιμότητα
+data/processed/*
+!data/processed/*_split_manifest.json
 data/tmp/
 data/synthetic/
 data/model_input/
@@ -27,6 +30,11 @@ data/context/weather/
 data/context/topography/
 data/context/urban_form/
 data/context/**/*.parquet
+
+# OSM (05a/05b/05c): εξαιρούνται το οδικό δίκτυο και το cache του OSMnx,
+# κρατιούνται τα osm_meta_{city}.json (ημερομηνία λήψης, μεγέθη)
+data/context/osm/*.graphml
+data/context/osm/cache/
 
 # ── Artifacts ─────────────────────────────────────────────────────────────────
 # Exclude large/regenerable experiment outputs
