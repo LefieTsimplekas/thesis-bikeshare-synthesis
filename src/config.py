@@ -39,6 +39,7 @@ LONDON_TRAINVAL_ROWS = 800_000
 
 # ---- OSM: προφίλ και τύποι σταθμών (§3) ----
 OSM_DIR = CONTEXT_DIR / "osm"
+PBF_DIR = RAW_DIR / "osm"         # τοπικά αρχεία OSM του Geofabrik (.osm.pbf)
 CITY_CENTERS = {                  # κέντρο κάθε πόλης για την απόσταση από το κέντρο
     "chicago": (41.8819, -87.6278),   # The Loop
     "nyc":     (40.7549, -73.9840),   # Midtown Manhattan

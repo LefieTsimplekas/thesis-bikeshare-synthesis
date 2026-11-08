@@ -15,31 +15,49 @@
 Δεν γίνεται εδώ καμία κανονικοποίηση μεταξύ πόλεων: η τυποποίηση και οι τύποι
 σταθμών ορίζονται στο 05b, μόνο από τις πόλεις-πηγές.
 
+Πηγές OSM:
+  - Σημεία ενδιαφέροντος και σταθμοί τρένου: τοπικά αρχεία .osm.pbf του Geofabrik
+    (κατεβαίνουν αυτόματα μία φορά στο data/raw/osm/). Διαβάζονται κόμβοι (nodes)
+    και γραμμές/περιγράμματα (ways, ως το κέντρο των κορυφών τους). Τα σύνθετα
+    πολύγωνα (relations) δεν διαβάζονται· το ποσοστό τους καταγράφεται στο meta.
+  - Οδικό δίκτυο για ποδήλατο: Overpass API μέσω OSMnx (ελαφρύ αίτημα).
+
 Είσοδος : data/processed/stations_{city}.parquet          (από 02b / l1)
 Έξοδοι  : data/context/osm/station_profiles_{city}.parquet
           data/context/osm/bike_graph_{city}.graphml       (ξαναχρησιμοποιείται στο 05c)
           data/context/osm/osm_{poi,transit}_{city}.parquet (cache)
-          data/context/osm/osm_meta_{city}.json            (ημερομηνία λήψης κ.λπ.)
+          data/context/osm/osm_meta_{city}.json            (ημερομηνίες και αρχεία πηγής)
 """
 
+import hashlib
 import json
 import time
 from datetime import datetime, timezone
 
 import geopandas as gpd
 import numpy as np
+import osmium
 import osmnx as ox
 import pandas as pd
 import requests
 
 from config import (
-    PROCESSED_DIR, OSM_DIR, CITY_CENTERS, PROFILE_RADIUS_M, OSM_BBOX_PAD_DEG,
+    PROCESSED_DIR, OSM_DIR, PBF_DIR, CITY_CENTERS, PROFILE_RADIUS_M, OSM_BBOX_PAD_DEG,
 )
 
 CITIES = ["chicago", "nyc", "london"]
 
-POI_TAGS = {"amenity": True, "shop": True, "office": True, "tourism": True}
-TRANSIT_TAGS = {"railway": ["station", "halt"]}   # μετρό, προαστιακός, τρένο
+POI_KEYS = ("amenity", "shop", "office", "tourism")   # οποιαδήποτε τιμή
+TRANSIT_VALUES = ("station", "halt")                  # railway=*: μετρό, προαστιακός, τρένο
+
+# Τοπικά αρχεία OSM (Geofabrik). Κάθε πόλη διαβάζει τις πολιτείες που καλύπτουν
+# τους σταθμούς της και τον κύκλο των 500 m γύρω τους, μαζί με τις γειτονικές.
+GEOFABRIK = "https://download.geofabrik.de"
+OSM_EXTRACTS = {
+    "chicago": ["north-america/us/illinois", "north-america/us/indiana"],
+    "nyc":     ["north-america/us/new-york", "north-america/us/new-jersey"],
+    "london":  ["europe/united-kingdom/england/greater-london"],
+}
 
 PROFILE_COLS = [
     "dist_center_norm", "bike_station_density", "poi_density",
@@ -122,36 +140,136 @@ def load_bike_graph(city: str, bbox: tuple):
     return G
 
 
-def fetch_features(city: str, name: str, tags: dict, bbox: tuple) -> gpd.GeoDataFrame:
-    path = OSM_DIR / f"osm_{name}_{city}.parquet"
+def pbf_path(region: str):
+    return PBF_DIR / f"{region.split('/')[-1]}-latest.osm.pbf"
+
+
+def download_pbf(region: str):
+    """Κατεβάζει το αρχείο του Geofabrik μία φορά (αν δεν υπάρχει ήδη)."""
+    path = pbf_path(region)
     if path.exists():
-        print(f"Using cached OSM {name}: {path}")
-        return gpd.read_parquet(path)
-    print(f"Downloading OSM {name}...")
-    try:
-        g = with_retry(ox.features_from_bbox, bbox, tags)
-        g = g[["geometry"]].reset_index(drop=True)
-    except ox._errors.InsufficientResponseError:
-        g = gpd.GeoDataFrame(geometry=[], crs="EPSG:4326")
-    g.to_parquet(path)
-    return g
+        return path
+    url = f"{GEOFABRIK}/{region}-latest.osm.pbf"
+    print(f"Downloading {url}")
+    tmp = path.with_suffix(".part")
+    with requests.get(url, stream=True, timeout=60) as r:
+        r.raise_for_status()
+        total = int(r.headers.get("content-length", 0))
+        done, next_report = 0, 0
+        with open(tmp, "wb") as f:
+            for chunk in r.iter_content(chunk_size=1 << 20):
+                f.write(chunk)
+                done += len(chunk)
+                if total and done >= next_report:
+                    print(f"  {done / 1e6:,.0f} / {total / 1e6:,.0f} MB")
+                    next_report += max(total // 10, 1)
+    tmp.replace(path)
+    return path
 
 
-def write_meta(city: str, bbox: tuple, G, pois, transit) -> None:
+def pbf_info(path) -> dict:
+    reader = osmium.io.Reader(str(path), osmium.osm.osm_entity_bits.NOTHING)
+    header = reader.header()
+    snapshot = header.get("osmosis_replication_timestamp", "")
+    reader.close()
+    h = hashlib.sha256()
+    with open(path, "rb") as f:
+        for chunk in iter(lambda: f.read(1 << 20), b""):
+            h.update(chunk)
+    return {"file": path.name, "osm_snapshot_utc": snapshot,
+            "size_mb": round(path.stat().st_size / 1e6, 1), "sha256": h.hexdigest()}
+
+
+def read_pbf_points(paths, bbox: tuple):
+    """POI και σταθμοί τρένου μέσα στο bbox, ως σημεία (lon, lat).
+    Nodes: η θέση τους. Ways: το κέντρο των κορυφών τους. Relations: παραλείπονται.
+    Τα αρχεία γειτονικών πολιτειών επικαλύπτονται στα όρια, οπότε κάθε αντικείμενο
+    μετρά μία φορά (με βάση τύπο και id)."""
+    left, bottom, right, top = bbox
+    poi, transit, seen = [], [], set()
+    n_poi_file, n_rel_poi_file = 0, 0
+    for path in paths:
+        print(f"Reading {path.name} ...")
+        fp = (osmium.FileProcessor(str(path))
+              .with_locations()
+              .with_filter(osmium.filter.KeyFilter(*POI_KEYS, "railway")))
+        for obj in fp:
+            tags = obj.tags
+            is_poi = any(k in tags for k in POI_KEYS)
+            if obj.is_relation():
+                if is_poi:
+                    n_rel_poi_file += 1
+                continue
+            key = ("n" if obj.is_node() else "w", obj.id)
+            if key in seen:
+                continue
+            seen.add(key)
+            if obj.is_node():
+                if not obj.location.valid():
+                    continue
+                lon, lat = obj.location.lon, obj.location.lat
+            else:
+                locs = [n.location for n in obj.nodes if n.location.valid()]
+                if not locs:
+                    continue
+                lon = sum(l.lon for l in locs) / len(locs)
+                lat = sum(l.lat for l in locs) / len(locs)
+            if is_poi:
+                n_poi_file += 1
+            if not (left <= lon <= right and bottom <= lat <= top):
+                continue
+            if is_poi:
+                poi.append((lon, lat))
+            if obj.is_node() and tags.get("railway") in TRANSIT_VALUES:
+                transit.append((lon, lat))
+
+    def to_gdf(pts):
+        if not pts:
+            return gpd.GeoDataFrame(geometry=[], crs="EPSG:4326")
+        a = np.array(pts)
+        return gpd.GeoDataFrame(geometry=gpd.points_from_xy(a[:, 0], a[:, 1]), crs="EPSG:4326")
+
+    rel_share = n_rel_poi_file / max(n_poi_file + n_rel_poi_file, 1)
+    return to_gdf(poi), to_gdf(transit), rel_share
+
+
+def load_points(city: str, bbox: tuple):
+    """POI και σταθμοί τρένου για την πόλη: από το cache, ή από τα αρχεία του Geofabrik."""
+    poi_path = OSM_DIR / f"osm_poi_{city}.parquet"
+    tr_path = OSM_DIR / f"osm_transit_{city}.parquet"
+    if poi_path.exists() and tr_path.exists():
+        print(f"Using cached OSM points: {poi_path.name}, {tr_path.name}")
+        return gpd.read_parquet(poi_path), gpd.read_parquet(tr_path), None
+
+    paths = [download_pbf(r) for r in OSM_EXTRACTS[city]]
+    pois, transit, rel_share = read_pbf_points(paths, bbox)
+    pois.to_parquet(poi_path)
+    transit.to_parquet(tr_path)
+    source = {"pbf_files": [pbf_info(p) for p in paths],
+              "poi_relations_skipped_share": round(rel_share, 4)}
+    return pois, transit, source
+
+
+def write_meta(city: str, bbox: tuple, G, pois, transit, source) -> None:
     path = OSM_DIR / f"osm_meta_{city}.json"
-    if path.exists():
-        return   # η αρχική ημερομηνία λήψης μένει
+    if path.exists() or source is None:
+        return   # οι αρχικές πληροφορίες λήψης μένουν
     meta = {
         "city": city,
-        "downloaded_at_utc": datetime.now(timezone.utc).isoformat(timespec="seconds"),
+        "processed_at_utc": datetime.now(timezone.utc).isoformat(timespec="seconds"),
         "osmnx_version": ox.__version__,
         "bbox_left_bottom_right_top": bbox,
+        "bike_graph_source": "Overpass API (OSMnx)",
         "graph_nodes": G.number_of_nodes(),
         "graph_edges": G.number_of_edges(),
-        "n_poi": len(pois),
-        "n_transit": len(transit),
+        "points_source": "Geofabrik .osm.pbf",
+        **source,
+        "n_poi_in_bbox": len(pois),
+        "n_transit_in_bbox": len(transit),
     }
     path.write_text(json.dumps(meta, indent=2), encoding="utf-8")
+    print(f"OSM snapshot: {[f['osm_snapshot_utc'] for f in source['pbf_files']]}, "
+          f"POI relations skipped: {100 * source['poi_relations_skipped_share']:.2f}%")
 
 
 # ---------------------------------------------------------------------------
@@ -231,9 +349,8 @@ def build_city(city: str) -> None:
     bbox = city_bbox(st)
 
     G = load_bike_graph(city, bbox)
-    pois = fetch_features(city, "poi", POI_TAGS, bbox)
-    transit = fetch_features(city, "transit", TRANSIT_TAGS, bbox)
-    write_meta(city, bbox, G, pois, transit)
+    pois, transit, source = load_points(city, bbox)
+    write_meta(city, bbox, G, pois, transit, source)
 
     prof = compute_profiles(city, st, G, pois, transit)
     out_path = OSM_DIR / f"station_profiles_{city}.parquet"
@@ -244,5 +361,6 @@ def build_city(city: str) -> None:
 
 if __name__ == "__main__":
     OSM_DIR.mkdir(parents=True, exist_ok=True)
+    PBF_DIR.mkdir(parents=True, exist_ok=True)
     for city in CITIES:
         build_city(city)
