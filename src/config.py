@@ -30,3 +30,9 @@ SAMPLING_SEED = 42
 # Η θέση του BikePoint δεν αντιστοιχεί στις διαδρομές του 2025.
 #   001058: διαδρομές "Edgware Road Station, Marylebone", BikePoint "Orchard Place, Blackwall Tunnel"
 LONDON_INVALID_STATION_IDS = ["001058"]
+
+# ---- Split Λονδίνου (§2.4) ----
+TEST_EVERY_NTH_DAY = 5          # κάθε 5η ημέρα του έτους στο test
+VAL_EVERY_NTH_DAY = 10          # από τις μη-test ημέρες, κάθε 10η στο validation
+LONDON_TEST_ROWS = 200_000
+LONDON_TRAINVAL_ROWS = 800_000
