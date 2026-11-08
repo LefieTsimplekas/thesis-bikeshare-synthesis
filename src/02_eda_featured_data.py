@@ -1,7 +1,9 @@
 from pathlib import Path
 import duckdb
 from config import (PROCESSED_DIR, TMP_DIR, MIN_TRIP_DURATION_MIN, MAX_TRIP_DURATION_MIN, MIN_MOVING_DISTANCE_KM, MAX_TRIP_DISTANCE_KM, MAX_SPEED_KMH,)
-
+import pandas as pd 
+pd.set_option("display.width",250)
+pd.set_option("display.max_columns",50)
 
 FILES = [
     str(PROCESSED_DIR / "chicago_keyed.parquet"),
@@ -16,7 +18,7 @@ def run_query(con: duckdb.DuckDBPyConnection, title: str, query: str) -> None:
     print(title)
     print(f"{'=' * 60}")
     result = con.execute(query).fetchdf()
-    print(result)
+    print(result.to_string(index=False))  
 
 
 def main() -> None:
