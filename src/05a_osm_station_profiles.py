@@ -23,12 +23,14 @@
 """
 
 import json
+import time
 from datetime import datetime, timezone
 
 import geopandas as gpd
 import numpy as np
 import osmnx as ox
 import pandas as pd
+import requests
 
 from config import (
     PROCESSED_DIR, OSM_DIR, CITY_CENTERS, PROFILE_RADIUS_M, OSM_BBOX_PAD_DEG,
@@ -47,6 +49,18 @@ PROFILE_COLS = [
 ox.settings.use_cache = True
 ox.settings.cache_folder = str(OSM_DIR / "cache")
 ox.settings.requests_timeout = 600
+# Μικρότερα αιτήματα (100 km² το καθένα): ελαφρύτερα για τον server, και όσα
+# πετύχουν μένουν στο cache, οπότε μια αποτυχία στη μέση δεν χάνει τα προηγούμενα.
+ox.settings.max_query_area_size = 100 * 1000 * 1000
+
+# Δημόσιοι servers Overpass (ίδια δεδομένα OSM). Σε κάθε αποτυχία δοκιμάζεται ο επόμενος.
+OVERPASS_URLS = [
+    "https://overpass-api.de/api",
+    "https://overpass.kumi.systems/api",
+    "https://overpass.private.coffee/api",
+]
+MAX_ATTEMPTS = 8
+FIRST_WAIT_S = 30
 ox.settings.useful_tags_way = list(
     set(ox.settings.useful_tags_way)
     | {"cycleway", "cycleway:left", "cycleway:right", "cycleway:both", "bicycle"}
@@ -80,13 +94,30 @@ def city_bbox(st: pd.DataFrame) -> tuple:
 # ---------------------------------------------------------------------------
 # Λήψη OSM (με cache στον δίσκο)
 # ---------------------------------------------------------------------------
+def with_retry(func, *args):
+    """Επανάληψη με αυξανόμενη αναμονή (30 s, 60 s, 120 s, ...) και εναλλαγή server,
+    όπως ζητά το Overpass όταν είναι υπερφορτωμένο."""
+    for attempt in range(MAX_ATTEMPTS):
+        ox.settings.overpass_url = OVERPASS_URLS[attempt % len(OVERPASS_URLS)]
+        try:
+            return func(*args)
+        except (ox._errors.ResponseStatusCodeError, requests.exceptions.RequestException) as e:
+            if attempt == MAX_ATTEMPTS - 1:
+                raise
+            wait = FIRST_WAIT_S * 2 ** attempt
+            first_line = str(e).splitlines()[0][:120]
+            print(f"  Overpass error at {ox.settings.overpass_url}: {first_line}")
+            print(f"  Retrying in {wait} s (attempt {attempt + 2}/{MAX_ATTEMPTS})...")
+            time.sleep(wait)
+
+
 def load_bike_graph(city: str, bbox: tuple):
     path = OSM_DIR / f"bike_graph_{city}.graphml"
     if path.exists():
         print(f"Using cached bike graph: {path}")
         return ox.load_graphml(path)
     print("Downloading OSM bike network (this can take a while)...")
-    G = ox.graph_from_bbox(bbox, network_type="bike", simplify=True)
+    G = with_retry(lambda: ox.graph_from_bbox(bbox, network_type="bike", simplify=True))
     ox.save_graphml(G, path)
     return G
 
@@ -98,7 +129,7 @@ def fetch_features(city: str, name: str, tags: dict, bbox: tuple) -> gpd.GeoData
         return gpd.read_parquet(path)
     print(f"Downloading OSM {name}...")
     try:
-        g = ox.features_from_bbox(bbox, tags)
+        g = with_retry(ox.features_from_bbox, bbox, tags)
         g = g[["geometry"]].reset_index(drop=True)
     except ox._errors.InsufficientResponseError:
         g = gpd.GeoDataFrame(geometry=[], crs="EPSG:4326")
