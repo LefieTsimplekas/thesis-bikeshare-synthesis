@@ -1,0 +1,142 @@
+# Έξοδος κονσόλας l1_lnd_dataset_build.py, όπως την έστειλε ο χρήστης
+# Πηγή: ιστορικό συνεδρίας, turn 262 (Σάββατο 2026-11-07 23:48) — τελευταία επιτυχής εκτέλεση (με αντιστοίχιση _OLD IDs και εξαίρεση του 001058)· προηγούμενες εκτελέσεις στα turns 250 (23:21) και 254 (23:32) παραλείπονται
+
+==============================================================================
+Τελευταία επιτυχής εκτέλεση — turn 262 (Σαβ 2026-11-07 23:48)
+==============================================================================
+Using cached stations from data\context\london_stations.parquet
+Reading London parquet...
+Unparsed start dates: 0
+Missing duration:     184
+Unknown bike model:   0
+
+Old station IDs mapped to current ID: 15 IDs, 77,488 trips
+  001059444 -> 001059  (Albert Embankment, Vauxhall)
+  001085444 -> 001085  (Old Quebec Street, Marylebone)
+  0011274444 -> 001127  (Risinghill Street, Angel)
+  001190444 -> 001190  (Kennington Lane Rail Bridge, Vauxhall)
+  001219444 -> 001219  (Lower Marsh, Waterloo)
+  200025444 -> 200025  (London Fields, Hackney Central)
+  200083444 -> 200083  (Pritchard's Road, Bethnal Green)
+  200134444 -> 200134  (Albany Street, The Regent's Park)
+  200136444 -> 200136  (BBC White City, White City)
+  200141444 -> 200141  (Westfield Ariel Way, White City)
+  2001454444 -> 200145  (Gloucester Avenue, Camden Town)
+  200191444 -> 200191  (Spencer Park, Wandsworth Common)
+  200230444 -> 200230  (Maplin Street, Mile End)
+  300032444 -> 300032  (Victoria & Albert Museum, South Kensington)
+  300241444 -> 300241  (Handyside Street, King's Cross)
+Trips with reused station ID (invalid BikePoint position): 20,734
+
+Unmatched start station: 74,819 (0.83%)
+Unmatched end station:   77,056 (0.85%)
+Most frequent unmatched station numbers:
+022163    33676
+001207    28600
+300248    26470
+002681    22245
+300232    19196
+002641    12159
+200143     8725
+010626      605
+022168      199
+TVD before vs after station matching (§3.4):
+  month          0.00045
+  rideable_type  0.00024
+  hour           0.00066
+  is_weekend     0.00051
+
+Physical stations: 797 (from 798 BikePoint IDs, 1 with >1 ID, 1 without 2025 trips)
+
+--- Cleaning flow (sequential) ---
+raw                         9068241
+after_dedup                 9068241
+valid_time_duration_bike    9068057
+year_2025                   9068057
+with_station                9068057
+valid_station_position      9047323
+matched_bikepoint           8898406
+duration                    8761390
+min_distance                8760825
+max_distance                8756949
+speed                       8756913
+
+Saved 8,756,913 rows to data\processed\london_filtered.parquet
+
+==============================================================================
+Ad-hoc ερωτήματα DuckDB (πίνακας LON, raw Λονδίνο) που τεκμηριώνουν το l1
+==============================================================================
+----------------------------------------------------------------------
+[turn 234 — Sat 2026-11-07 22:26] Λονδίνο raw (πίνακας LON): ανάγνωση ημερομηνιών με '%Y-%m-%d %H:%M', κενή διάρκεια, και ασυμφωνία End−Start έναντι Total duration (ms) > 2 λεπτά / London raw: date parsing, missing duration, end−start vs duration_ms mismatch
+----------------------------------------------------------------------
+n	unparsed_start	unparsed_end	missing_duration	mismatch_over_2min
+9068241	0	184	184	343
+
+----------------------------------------------------------------------
+[turn 236 — Sat 2026-11-07 22:27] Λονδίνο raw: ημερομηνίες με τις περισσότερες ασυμφωνίες > 2 λεπτά (έλεγχος αλλαγής ώρας) / dates with most mismatches (DST check)
+----------------------------------------------------------------------
+d	n
+2025-10-26T00:00:00.000Z	70
+2025-03-30T00:00:00.000Z	62
+2025-03-29T00:00:00.000Z	49
+2025-10-25T00:00:00.000Z	39
+2025-03-28T00:00:00.000Z	16
+
+----------------------------------------------------------------------
+[turn 252 — Sat 2026-11-07 23:23] Λονδίνο: ονόματα σταθμών στις διαδρομές για IDs με κατάληξη 444/4444 και για αταίριαστα IDs, έναντι ονόματος στο BikePoint / trip station names vs BikePoint names for unmatched IDs
+----------------------------------------------------------------------
+id	trip_name	n	bikepoint_name
+001085	Old Quebec Street, Marylebone	12412	Old Quebec Street, Marylebone
+001085444	Old Quebec Street, Marylebone_OLD	6676	NULL
+001207	Tavistock Street, Covent Garden	13786	NULL
+022163	Southwark Station 2, Southwark	16499	NULL
+200025	London Fields, Hackney Central	15102	London Fields, Hackney Central
+200025444	London Fields, Hackney Central_OLD	7337	NULL
+200145	Gloucester Avenue, Camden Town	4437	Gloucester Avenue, Camden Town
+2001454444	Gloucester Avenue, Camden Town_OLD	3453	NULL
+
+----------------------------------------------------------------------
+[turn 256 — Sat 2026-11-07 23:33] Λονδίνο raw: σταθμοί που εμφανίζονται στις διαδρομές με ταχύτητα > 40 km/h (θέσεις BikePoint), top 15 / stations involved in >40 km/h trips
+----------------------------------------------------------------------
+station	n_too_fast
+001058	6164
+001164	390
+001112	285
+001090	205
+001132	188
+001166	186
+300211	182
+001052	170
+003424	168
+001050	167
+001175	165
+000972	154
+002680	143
+001036	136
+003469	131
+
+----------------------------------------------------------------------
+[turn 258 — Sat 2026-11-07 23:35] Σταθμός 001058: θέση/όνομα στο BikePoint, όνομα στις διαδρομές, και διαδρομές του που έμειναν μετά το φιλτράρισμα (τρία queries επικολλημένα μαζί) / station 001058 diagnostics
+----------------------------------------------------------------------
+station_id	station_name	lat	lng
+001058	Orchard Place, Blackwall Tunnel	51.510212	0.004979 Start station	n
+Edgware Road Station, Marylebone	10659 n_kept	median_km	median_min
+6135	9.25	22.7
+
+----------------------------------------------------------------------
+[turn 260 — Sat 2026-11-07 23:36] Λονδίνο: IDs όπου το όνομα στις διαδρομές διαφέρει από το όνομα στο BikePoint / IDs whose trip name differs from BikePoint name
+----------------------------------------------------------------------
+id	trip_name	bikepoint_name	n
+001058	Edgware Road Station, Marylebone	Orchard Place, Blackwall Tunnel	21012
+300204	Victoria Rise, Clapham Common_OLD	Victoria Rise, Clapham Common	4206
+001145	Earnshaw Street , Covent Garden	Bucknall Street, Covent Garden	2114
+200025	London Fields, Hackney	London Fields, Hackney Central	1
+
+[screenshot στο turn 224 — δεν είναι διαθέσιμο ως κείμενο] (Σαβ 2026-11-07 21:55) Δύο φωτογραφίες από τα raw δεδομένα του Λονδίνου (δείγμα γραμμών).
+  (από την απάντηση του assistant, όχι αυτούσια έξοδος, turns 225 και 231): Start date της μορφής `2025-01-14 23:59` (ακρίβεια λεπτού)· End date π.χ. `2025-01-15 00:10`· αριθμός σταθμού `001068` (με μηδενικά μπροστά)· Bike model: CLASSIC, PBSC_EBIKE.
+
+==============================================================================
+Στοιχεία από το κείμενο του χρήστη
+==============================================================================
+- turn 208 (Σαβ 2026-11-07 19:55): "ενα λογος που χωριζω εδω ειναι οτι συνολικα εχει 9068241 διαδρομές και κανω ενα stratified sample για να καταληξω και απο εδω σε ενα συνολο 1 εκατομμυριου εγγραφων-διαδρομων"
+- turn 210 (Σαβ 2026-11-07 19:57): "9 εκα ειναι το αρχικο ακαθαριστο londosn δατασε. και πιστευω οτι πρπει να καταληξω στο τελοες με ενα dataset 1000000 εγγραφων μετα το statified sample"

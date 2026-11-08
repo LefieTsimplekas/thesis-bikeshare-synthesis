@@ -1,0 +1,91 @@
+# Έξοδος κονσόλας l2_lnd_split.py, όπως την έστειλε ο χρήστης
+# Πηγή: ιστορικό συνεδρίας, turn 274 (Κυριακή 2026-11-08 14:20) — μοναδική εκτέλεση με επικολλημένη έξοδο
+
+==============================================================================
+Εκτέλεση — turn 274 (Κυρ 2026-11-08 14:20)
+==============================================================================
+Days per role:
+role
+test         73
+trainval    263
+val          29
+Test days per weekday (0 = Mon):
+day
+0    10
+1    10
+2    11
+3    10
+4    11
+5    10
+6    11
+
+Trips on test days:        1,749,151 (20.0%)
+Trips on train/val days:   7,007,762
+
+Sampling test days -> 200,000
+  Computing allocation table...
+  month 1/12 done
+  month 2/12 done
+  month 3/12 done
+  month 4/12 done
+  month 5/12 done
+  month 6/12 done
+  month 7/12 done
+  month 8/12 done
+  month 9/12 done
+  month 10/12 done
+  month 11/12 done
+  month 12/12 done
+Sampling train/val days -> 800,000
+  Computing allocation table...
+  month 1/12 done
+  month 2/12 done
+  month 3/12 done
+  month 4/12 done
+  month 5/12 done
+  month 6/12 done
+  month 7/12 done
+  month 8/12 done
+  month 9/12 done
+  month 10/12 done
+  month 11/12 done
+  month 12/12 done
+test   200,000 rows -> data\processed\london_test.parquet
+train  720,809 rows -> data\processed\london_train.parquet
+val    79,191 rows -> data\processed\london_val.parquet
+
+--- Representativeness: test (200,000 of 1,749,151) ---
+  month           TVD 0.00002
+  rideable_type   TVD 0.00002
+  part_of_day     TVD 0.00001
+  is_weekend      TVD 0.00000
+  hour            TVD 0.00363
+  day_of_week     TVD 0.00209
+  same_station    TVD 0.00002
+  trip_duration          pop [3.49, 7.78, 13.22, 21.26, 40.68]
+                         smp [3.46, 7.76, 13.19, 21.22, 40.7]
+  haversine_distance_km  pop [0.42, 1.16, 2.04, 3.3, 5.9]
+                         smp [0.42, 1.16, 2.04, 3.3, 5.9]
+
+--- Representativeness: train+val (800,000 of 7,007,762) ---
+  month           TVD 0.00001
+  rideable_type   TVD 0.00000
+  part_of_day     TVD 0.00000
+  is_weekend      TVD 0.00000
+  hour            TVD 0.00146
+  day_of_week     TVD 0.00100
+  same_station    TVD 0.00016
+  trip_duration          pop [3.49, 7.8, 13.28, 21.4, 41.19]
+                         smp [3.49, 7.79, 13.27, 21.4, 41.13]
+  haversine_distance_km  pop [0.42, 1.16, 2.05, 3.31, 5.9]
+                         smp [0.42, 1.16, 2.05, 3.31, 5.91]
+Manifest written to data\processed\london_split_manifest.json
+
+==============================================================================
+Κενά / screenshots
+==============================================================================
+[screenshot στο turn 270 — δεν είναι διαθέσιμο ως κείμενο] (Κυρ 2026-11-08 14:14) Λίστα παλιών αρχείων Λονδίνου στο data/processed (όχι έξοδος script).
+  (από την απάντηση του assistant, turn 271): london_filtered, london_featured_with_weather, london_sampled_with_weather, london_test, london_train.
+[screenshot στο turn 272 — δεν είναι διαθέσιμο ως κείμενο] (Κυρ 2026-11-08 14:17) Λίστα όλων των αρχείων στο data/processed πριν το l2 (όχι έξοδος script).
+  (από την απάντηση του assistant, turn 273): chicago/nyc _sampled, _filtered, _keyed, _featured· stations_*, station_map_* (3 πόλεις)· station_ids_chicago/nyc· london_filtered· chicago_sampled_with_weather, nyc_sampled_with_weather, chicago_nyc_sampled_with_weather.
+Σημείωση: στο turn 302 (Κυρ 2026-11-08 16:33) το l2 ξανάτρεξε κατά λάθος από το κουμπί Run· ο χρήστης επικόλλησε μόνο τη γραμμή εντολής, χωρίς έξοδο (βλ. 05a_osm_station_profiles.txt).

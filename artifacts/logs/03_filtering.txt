@@ -1,0 +1,68 @@
+# Έξοδος κονσόλας 03_filtering.py, όπως την έστειλε ο χρήστης
+# Πηγή: ιστορικό συνεδρίας, turn 182 (Σάββατο 2026-11-07 14:39) — τελευταία επιτυχής εκτέλεση (με εκτύπωση του κανόνα ταχύτητας)· προηγούμενη εκτέλεση στο turn 180 (Σαβ 2026-11-07 14:33, ίδιοι αριθμοί) παραλείπεται
+
+==============================================================================
+Τελευταία επιτυχής εκτέλεση — turn 182 (Σαβ 2026-11-07 14:39)
+==============================================================================
+(το μήνυμα ξεκινά με: "το 1 μπηκε για το εισαι σωστα στα νουμερα που βγαζει ακριβως τα ιδια βγαζω και εγω. και εδω ειναι τα νεα αποτελεσματα")
+
+==================================================
+Processing city: chicago
+==================================================
+Rows before filtering: 3673717
+
+--- Duration–distance correlation (non-round trips) ---
+    pearson  spearman
+0  0.602985  0.763756
+
+--- Filtering Rules ---
+Minimum duration kept: > 1.0 minutes
+Maximum duration kept: < 100.0 minutes
+Minimum distance kept for non-same-station trips: > 0.05 km
+Maximum distance kept: < 12.0 km
+Maximum speed kept for non-round trips: <= 40.0 km/h
+
+--- Diagnostic Report ---
+   step0_input  info_negative_duration  step1_duration  step2_min_distance  step3_max_distance  step4_speed
+0      3673717                      18         3610003             3609131             3601416      3601392
+
+--- Filtering Report ---
+Rows before: 3673717
+Rows after: 3601392
+Rows removed: 72325
+Percentage removed: 1.97%
+
+Saved filtered data to: data\processed\chicago_filtered.parquet
+
+==================================================
+Processing city: nyc
+==================================================
+Rows before filtering: 45623696
+
+--- Duration–distance correlation (non-round trips) ---
+    pearson  spearman
+0  0.706409   0.83045
+
+--- Filtering Rules ---
+Minimum duration kept: > 1.0 minutes
+Maximum duration kept: < 100.0 minutes
+Minimum distance kept for non-same-station trips: > 0.05 km
+Maximum distance kept: < 12.0 km
+Maximum speed kept for non-round trips: <= 40.0 km/h
+
+--- Diagnostic Report ---
+   step0_input  info_negative_duration  step1_duration  step2_min_distance  step3_max_distance  step4_speed
+0     45623696                     482        45527892            45526351            45471708     45471690
+
+--- Filtering Report ---
+Rows before: 45623696
+Rows after: 45471690
+Rows removed: 152006
+Percentage removed: 0.33%
+
+Saved filtered data to: data\processed\nyc_filtered.parquet
+
+==============================================================================
+Στοιχεία από το κείμενο του χρήστη
+==============================================================================
+- turn 182 (Σαβ 2026-11-07 14:39): "το 1 μπηκε για το εισαι σωστα στα νουμερα που βγαζει ακριβως τα ιδια βγαζω και εγω" — επιβεβαίωση του ελέγχου κλειδιών στο chicago_filtered (αναμενόμενα κατά τον assistant στο turn 181: COUNT(*) = 3.601.392, COUNT(start_station_key) = 3.601.392, COUNT(DISTINCT start_station_key) ≈ 1.160).

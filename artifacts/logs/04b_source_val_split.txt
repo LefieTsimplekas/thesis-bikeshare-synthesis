@@ -1,0 +1,43 @@
+# Έξοδος κονσόλας 04b_source_val_split.py, όπως την έστειλε ο χρήστης
+# Πηγή: ιστορικό συνεδρίας, turn 284 (Κυριακή 2026-11-08 14:30) — μοναδική εκτέλεση
+
+==============================================================================
+Εκτέλεση — turn 284 (Κυρ 2026-11-08 14:30)
+==============================================================================
+===== chicago =====
+train 904,996  val 95,004  (9.5% validation)
+validation days: 36
+validation days per weekday (0 = Mon):
+0    5
+1    5
+2    5
+3    5
+4    6
+5    5
+6    5
+TVD validation vs whole sample:
+  month           0.04898
+  rideable_type   0.00616
+  part_of_day     0.00446
+  is_weekend      0.00231
+  hour            0.01042
+  same_station    0.00082
+
+===== nyc =====
+train 899,561  val 100,439  (10.0% validation)
+validation days: 36
+validation days per weekday (0 = Mon):
+0    5
+1    5
+2    5
+3    5
+4    6
+5    5
+6    5
+TVD validation vs whole sample:
+  month           0.05696
+  rideable_type   0.00069
+  part_of_day     0.00496
+  is_weekend      0.00318
+  hour            0.00918
+  same_station    0.00095

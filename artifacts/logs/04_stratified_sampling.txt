@@ -1,0 +1,220 @@
+# Έξοδος κονσόλας 04_stratified_sampling.py, όπως την έστειλε ο χρήστης
+# Πηγή: ιστορικό συνεδρίας, turn 190 (Σάββατο 2026-11-07 16:39) — ο χρήστης επικόλλησε σε ένα μήνυμα δύο διαδοχικές εκτελέσεις (έξοδος *_sampled και *_sampled_run1, για τον έλεγχο αναπαραγωγιμότητας)· κρατιέται ολόκληρο το μήνυμα, αυτούσιο
+
+==============================================================================
+Εκτελέσεις — turn 190 (Σαβ 2026-11-07 16:39), δύο εκτελέσεις στο ίδιο μήνυμα
+==============================================================================
+============================================================
+Creating sampled datasets
+============================================================
+
+============================================================
+Strata report: chicago
+============================================================
+   total_rows  n_strata  min_strata_size  max_strata_size  avg_strata_size  strata_below_10  strata_below_50  strata_below_100  effective_target_rows
+0     3601392       192             1172            71506         18757.25              0.0              0.0               0.0                1000000
+
+--- Smallest strata ---
+   month  rideable_type   part_of_day  is_weekend     n
+0      1   classic_bike         night           1  1172
+1     12   classic_bike         night           1  1362
+2     12  electric_bike  morning_peak           1  1427
+3     12   classic_bike  morning_peak           1  1450
+4      2   classic_bike         night           1  1498
+5      1  electric_bike         night           1  1569
+6      1  electric_bike  morning_peak           1  1738
+7     12  electric_bike         night           1  1767
+8      2  electric_bike         night           1  1869
+9      1   classic_bike  morning_peak           1  1878
+
+============================================================
+Strata report: nyc
+============================================================
+   total_rows  n_strata  min_strata_size  max_strata_size  avg_strata_size  strata_below_10  strata_below_50  strata_below_100  effective_target_rows
+0    45471690       192            15528           956743     236831.71875              0.0              0.0               0.0                1000000
+
+--- Smallest strata ---
+   month rideable_type   part_of_day  is_weekend      n
+0      2  classic_bike         night           1  15528
+1     12  classic_bike         night           1  17909
+2      1  classic_bike         night           1  18630
+3     12  classic_bike  morning_peak           1  20611
+4      2  classic_bike  morning_peak           1  23529
+5      1  classic_bike  morning_peak           1  26879
+6     12  classic_bike  evening_peak           1  30672
+7      3  classic_bike         night           1  33052
+8      2  classic_bike  evening_peak           1  33666
+9      1  classic_bike  evening_peak           1  33897
+
+Sampling chicago...
+  Computing allocation table...
+  month 1/12 done
+  month 2/12 done
+  month 3/12 done
+  month 4/12 done
+  month 5/12 done
+  month 6/12 done
+  month 7/12 done
+  month 8/12 done
+  month 9/12 done
+  month 10/12 done
+  month 11/12 done
+  month 12/12 done
+  Saved to: data\processed\chicago_sampled.parquet
+
+--- Representativeness: chicago (TVD, sample vs population) ---
+  month           0.00001
+  rideable_type   0.00000
+  part_of_day     0.00000
+  is_weekend      0.00000
+  hour            0.00122
+  day_of_week     0.00075
+  same_station    0.00027
+
+  Quantiles (population vs sample):
+  trip_duration          pop [2.78, 5.78, 9.87, 17.25, 39.72]
+                         smp [2.78, 5.8, 9.85, 17.25, 39.75]
+  haversine_distance_km  pop [0.27, 0.94, 1.6, 2.81, 5.92]
+                         smp [0.27, 0.94, 1.6, 2.81, 5.91]
+
+Sampling nyc...
+  Computing allocation table...
+  month 1/12 done
+  month 2/12 done
+  month 3/12 done
+  month 4/12 done
+  month 5/12 done
+  month 6/12 done
+  month 7/12 done
+  month 8/12 done
+  month 9/12 done
+  month 10/12 done
+  month 11/12 done
+  month 12/12 done
+  Saved to: data\processed\nyc_sampled.parquet
+
+--- Representativeness: nyc (TVD, sample vs population) ---
+  month           0.00000
+  rideable_type   0.00000
+  part_of_day     0.00000
+  is_weekend      0.00000
+  hour            0.00147
+  day_of_week     0.00100
+  same_station    0.00019
+
+  Quantiles (population vs sample):
+  trip_duration          pop [2.42, 5.17, 8.77, 15.03, 31.4]
+                         smp [2.42, 5.17, 8.78, 15.05, 31.42]
+  haversine_distance_km  pop [0.32, 0.86, 1.49, 2.59, 5.35]
+                         smp [0.32, 0.86, 1.49, 2.59, 5.36]    ============================================================
+Creating sampled datasets
+============================================================
+
+============================================================
+Strata report: chicago
+============================================================
+   total_rows  n_strata  min_strata_size  max_strata_size  avg_strata_size  strata_below_10  strata_below_50  strata_below_100  effective_target_rows
+0     3601392       192             1172            71506         18757.25              0.0              0.0               0.0                1000000
+
+--- Smallest strata ---
+   month  rideable_type   part_of_day  is_weekend     n
+0      1   classic_bike         night           1  1172
+1     12   classic_bike         night           1  1362
+2     12  electric_bike  morning_peak           1  1427
+3     12   classic_bike  morning_peak           1  1450
+4      2   classic_bike         night           1  1498
+5      1  electric_bike         night           1  1569
+6      1  electric_bike  morning_peak           1  1738
+7     12  electric_bike         night           1  1767
+8      2  electric_bike         night           1  1869
+9      1   classic_bike  morning_peak           1  1878
+
+============================================================
+Strata report: nyc
+============================================================
+   total_rows  n_strata  min_strata_size  max_strata_size  avg_strata_size  strata_below_10  strata_below_50  strata_below_100  effective_target_rows
+0    45471690       192            15528           956743     236831.71875              0.0              0.0               0.0                1000000
+
+--- Smallest strata ---
+   month rideable_type   part_of_day  is_weekend      n
+0      2  classic_bike         night           1  15528
+1     12  classic_bike         night           1  17909
+2      1  classic_bike         night           1  18630
+3     12  classic_bike  morning_peak           1  20611
+4      2  classic_bike  morning_peak           1  23529
+5      1  classic_bike  morning_peak           1  26879
+6     12  classic_bike  evening_peak           1  30672
+7      3  classic_bike         night           1  33052
+8      2  classic_bike  evening_peak           1  33666
+9      1  classic_bike  evening_peak           1  33897
+
+Sampling chicago...
+  Computing allocation table...
+  month 1/12 done
+  month 2/12 done
+  month 3/12 done
+  month 4/12 done
+  month 5/12 done
+  month 6/12 done
+  month 7/12 done
+  month 8/12 done
+  month 9/12 done
+  month 10/12 done
+  month 11/12 done
+  month 12/12 done
+  Saved to: data\processed\chicago_sampled_run1.parquet
+
+--- Representativeness: chicago (TVD, sample vs population) ---
+  month           0.00001
+  rideable_type   0.00000
+  part_of_day     0.00000
+  is_weekend      0.00000
+  hour            0.00122
+  day_of_week     0.00075
+  same_station    0.00027
+
+  Quantiles (population vs sample):
+  trip_duration          pop [2.78, 5.78, 9.87, 17.25, 39.72]
+                         smp [2.78, 5.8, 9.85, 17.25, 39.75]
+  haversine_distance_km  pop [0.27, 0.94, 1.6, 2.81, 5.92]
+                         smp [0.27, 0.94, 1.6, 2.81, 5.91]
+
+Sampling nyc...
+  Computing allocation table...
+  month 1/12 done
+  month 2/12 done
+  month 3/12 done
+  month 4/12 done
+  month 5/12 done
+  month 6/12 done
+  month 7/12 done
+  month 8/12 done
+  month 9/12 done
+  month 10/12 done
+  month 11/12 done
+  month 12/12 done
+  Saved to: data\processed\nyc_sampled_run1.parquet
+
+--- Representativeness: nyc (TVD, sample vs population) ---
+  month           0.00000
+  rideable_type   0.00000
+  part_of_day     0.00000
+  is_weekend      0.00000
+  hour            0.00147
+  day_of_week     0.00100
+  same_station    0.00019
+
+  Quantiles (population vs sample):
+  trip_duration          pop [2.42, 5.17, 8.77, 15.03, 31.4]
+                         smp [2.42, 5.17, 8.78, 15.05, 31.42]
+  haversine_distance_km  pop [0.32, 0.86, 1.49, 2.59, 5.35]
+                         smp [0.32, 0.86, 1.49, 2.59, 5.36]
+
+==============================================================================
+Ad-hoc ερωτήματα DuckDB που τεκμηριώνουν το 04
+==============================================================================
+----------------------------------------------------------------------
+[turn 192 — Sat 2026-11-07 16:40] Σύγκριση γραμμή προς γραμμή chicago_sampled_run1 EXCEPT ALL chicago_sampled (έλεγχος αναπαραγωγιμότητας) / row-by-row reproducibility check
+----------------------------------------------------------------------
+(ο χρήστης έγραψε σε πρόζα: "to query βγαζει 0 αρα μπορω να σβησω τα επιπελον αρχεια που εφτιαξα??")
+Αποτέλεσμα: 0
