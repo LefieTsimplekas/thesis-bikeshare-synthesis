@@ -1,0 +1,44 @@
+# Έξοδος κονσόλας όπως την έστειλε ο χρήστης, εκτέλεση 2026-11-08T21:38:34.323Z (UTC)
+# Πηγή: ιστορικό συνεδρίας εργασίας
+
+===== chicago =====
+Graph: 187,227 nodes, 496,639 edges; largest strongly connected component 186,497 nodes (99.6%)
+Stations: 1,158; snap distance median 19 m, p99 72 m; > 200 m: 0
+  origins 1,146/1,146
+OD pairs: 129,322 (1,068 round trip); unreachable: 0
+Circuity: median 1.196, p05 1.043, p95 1.53, < 1: 0
+Spearman with duration (train, non-round trips): haversine 0.7635, network 0.777
+Saved to data\context\osm\od_network_chicago.parquet
+
+===== nyc =====
+Graph: 86,368 nodes, 199,466 edges; largest strongly connected component 85,631 nodes (99.1%)
+Stations: 2,263; snap distance median 16 m, p99 80 m; > 200 m: 9
+  origins 2,218/2,218
+OD pairs: 351,735 (2,060 round trip); unreachable: 0
+Circuity: median 1.27, p05 1.065, p95 1.76, < 1: 0
+Spearman with duration (train, non-round trips): haversine 0.8304, network 0.835
+Saved to data\context\osm\od_network_nyc.parquet
+
+===== london =====
+Graph: 73,170 nodes, 164,573 edges; largest strongly connected component 72,606 nodes (99.2%)
+Stations: 796; snap distance median 17 m, p99 68 m; > 200 m: 0
+  origins 792/792
+OD pairs: 240,343 (793 round trip); unreachable: 0
+Circuity: median 1.242, p05 1.109, p95 1.549, < 1: 0
+Spearman with duration (train, non-round trips): haversine 0.7908, network 0.7964
+Saved to data\context\osm\od_network_london.parquet
+
+city                         chicago     nyc  london
+stations                        1158    2263     796
+od_pairs                      129322  351735  240343
+round_trip_pairs                1068    2060     793
+unreachable_pairs                  0       0       0
+snap_median_m                   19.3    15.8    16.7
+snap_over_warn                     0       9       0
+circuity_median                1.196    1.27   1.242
+circuity_p05                   1.043   1.065   1.109
+circuity_p95                    1.53    1.76   1.549
+pairs_circuity_below_1             0       0       0
+types_missing                      0       0       0
+spearman_duration_haversine   0.7635  0.8304  0.7908
+spearman_duration_network      0.777   0.835  0.7964
