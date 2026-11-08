@@ -36,3 +36,13 @@ TEST_EVERY_NTH_DAY = 5          # κάθε 5η ημέρα του έτους στ
 VAL_EVERY_NTH_DAY = 10          # από τις μη-test ημέρες, κάθε 10η στο validation
 LONDON_TEST_ROWS = 200_000
 LONDON_TRAINVAL_ROWS = 800_000
+
+# ---- OSM: προφίλ και τύποι σταθμών (§3) ----
+OSM_DIR = CONTEXT_DIR / "osm"
+CITY_CENTERS = {                  # κέντρο κάθε πόλης για την απόσταση από το κέντρο
+    "chicago": (41.8819, -87.6278),   # The Loop
+    "nyc":     (40.7549, -73.9840),   # Midtown Manhattan
+    "london":  (51.5073, -0.1276),    # Charing Cross
+}
+PROFILE_RADIUS_M = 500            # ακτίνα των χαρακτηριστικών γύρω από κάθε σταθμό
+OSM_BBOX_PAD_DEG = 0.01           # περιθώριο ~1 km γύρω από τους σταθμούς για τη λήψη OSM
