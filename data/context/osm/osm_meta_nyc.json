@@ -1,0 +1,32 @@
+{
+  "city": "nyc",
+  "processed_at_utc": "2026-11-08T18:45:51+00:00",
+  "osmnx_version": "2.1.1",
+  "bbox_left_bottom_right_top": [
+    -74.09670067787171,
+    40.601240000000004,
+    -73.83672,
+    40.8963
+  ],
+  "bike_graph_source": "Overpass API (OSMnx)",
+  "graph_nodes": 86368,
+  "graph_edges": 203513,
+  "points_source": "Geofabrik .osm.pbf",
+  "pbf_files": [
+    {
+      "file": "new-york-latest.osm.pbf",
+      "osm_snapshot_utc": "2026-11-07T21:21:36Z",
+      "size_mb": 498.6,
+      "sha256": "45f348e195612a6a3dedf54ebd35af51791593372aaafe063b5f2f64fb865840"
+    },
+    {
+      "file": "new-jersey-latest.osm.pbf",
+      "osm_snapshot_utc": "2026-11-07T21:21:36Z",
+      "size_mb": 165.0,
+      "sha256": "e4e2defa7876111015320d9ccef3ddc08f7f9d4b65447c5e0cd49d9accfab26f"
+    }
+  ],
+  "poi_relations_skipped_share": 0.0054,
+  "n_poi_in_bbox": 123180,
+  "n_transit_in_bbox": 486
+}

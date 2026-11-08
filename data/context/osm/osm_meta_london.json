@@ -1,0 +1,26 @@
+{
+  "city": "london",
+  "processed_at_utc": "2026-11-08T20:15:20+00:00",
+  "osmnx_version": "2.1.1",
+  "bbox_left_bottom_right_top": [
+    -0.24676900000000002,
+    51.442997000000005,
+    0.007725,
+    51.559369
+  ],
+  "bike_graph_source": "Overpass API (OSMnx)",
+  "graph_nodes": 73170,
+  "graph_edges": 167099,
+  "points_source": "Geofabrik .osm.pbf",
+  "pbf_files": [
+    {
+      "file": "greater-london-latest.osm.pbf",
+      "osm_snapshot_utc": "2026-11-07T21:21:36Z",
+      "size_mb": 130.1,
+      "sha256": "f447a4a4533f279909569bbe9feeae6491e8d7dbdab5e11214642cc1cdcc149f"
+    }
+  ],
+  "poi_relations_skipped_share": 0.0024,
+  "n_poi_in_bbox": 106012,
+  "n_transit_in_bbox": 256
+}

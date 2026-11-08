@@ -1,0 +1,32 @@
+{
+  "city": "chicago",
+  "processed_at_utc": "2026-11-08T16:41:07+00:00",
+  "osmnx_version": "2.1.1",
+  "bbox_left_bottom_right_top": [
+    -87.84674000000001,
+    41.638500762664094,
+    -87.51823173999786,
+    42.074853999999995
+  ],
+  "bike_graph_source": "Overpass API (OSMnx)",
+  "graph_nodes": 187227,
+  "graph_edges": 506541,
+  "points_source": "Geofabrik .osm.pbf",
+  "pbf_files": [
+    {
+      "file": "illinois-latest.osm.pbf",
+      "osm_snapshot_utc": "2026-11-07T21:21:36Z",
+      "size_mb": 363.2,
+      "sha256": "1da2b14aaef40b18b8cb72178a006184020868ee52153cd65c5f05e3ead4680d"
+    },
+    {
+      "file": "indiana-latest.osm.pbf",
+      "osm_snapshot_utc": "2026-11-07T21:21:36Z",
+      "size_mb": 201.8,
+      "sha256": "5f1d8fe44172edb952673cf93a17ce5c43e6e66535a03a8d4e9d41139260c932"
+    }
+  ],
+  "poi_relations_skipped_share": 0.0087,
+  "n_poi_in_bbox": 57359,
+  "n_transit_in_bbox": 249
+}

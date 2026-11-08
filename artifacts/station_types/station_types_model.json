@@ -1,0 +1,96 @@
+{
+  "profile_cols": [
+    "dist_center_norm",
+    "bike_station_density",
+    "poi_density",
+    "transit_density",
+    "cycle_infra_km"
+  ],
+  "log1p_cols": [
+    "bike_station_density",
+    "poi_density",
+    "transit_density",
+    "cycle_infra_km"
+  ],
+  "standardization_fitted_on": [
+    "chicago",
+    "nyc"
+  ],
+  "scaler": {
+    "mean": {
+      "dist_center_norm": 1.009444,
+      "bike_station_density": 1.919798,
+      "poi_density": 5.346295,
+      "transit_density": 0.723215,
+      "cycle_infra_km": 1.401465
+    },
+    "std": {
+      "dist_center_norm": 0.535869,
+      "bike_station_density": 0.893227,
+      "poi_density": 1.146505,
+      "transit_density": 0.690747,
+      "cycle_infra_km": 0.545233
+    }
+  },
+  "min_trips_for_fit": 10,
+  "n_stations_fit": 3441,
+  "k_range": [
+    5,
+    8
+  ],
+  "silhouette": {
+    "5": 0.2411,
+    "6": 0.2463,
+    "7": 0.2422,
+    "8": 0.2418
+  },
+  "k_chosen": 6,
+  "merges_below_min_share": [],
+  "min_type_share": 0.02,
+  "n_types_final": 6,
+  "centers_standardized": [
+    [
+      -1.156551,
+      0.986502,
+      1.387797,
+      1.680852,
+      1.034881
+    ],
+    [
+      -0.835459,
+      0.464275,
+      0.752568,
+      0.070908,
+      0.491017
+    ],
+    [
+      -0.051058,
+      -0.160587,
+      -0.345844,
+      -0.949324,
+      0.134634
+    ],
+    [
+      0.383646,
+      0.155889,
+      -0.469789,
+      -0.377454,
+      -1.741034
+    ],
+    [
+      0.617864,
+      0.422902,
+      -0.011572,
+      0.539248,
+      0.188435
+    ],
+    [
+      0.971326,
+      -1.845861,
+      -1.422244,
+      -0.832861,
+      -1.10584
+    ]
+  ],
+  "seed": 42
+}
