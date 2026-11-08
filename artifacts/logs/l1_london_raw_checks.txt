@@ -1,0 +1,39 @@
+# Έλεγχοι στα αρχικά δεδομένα του Λονδίνου (TfL 2025)
+
+=== london | 1α. Number: διπλές εγγραφές ===
+   rows  distinct_number  duplicates
+9068241          9068241           0
+
+=== london | 1β. Bike model: τιμές ===
+bike_model   trips   pct
+   CLASSIC 7427531 81.91
+PBSC_EBIKE 1640710 18.09
+
+=== london | 1γ. Μήκος κωδικού σταθμού (Start) ===
+ id_length   trips  n_ids    pct                                                examples
+         6 9028611    805 99.563                [300231, 000999, 200202, 003432, 003427]
+         9   35847     13  0.395 [001190444, 001059444, 200191444, 200083444, 001219444]
+        10    3783      2  0.042                                [2001454444, 0011274444]
+
+=== london | 1γ. Μήκος κωδικού σταθμού (End) ===
+ id_length   trips  n_ids    pct                                                examples
+         0     184      1  0.002                                                      []
+         6 9028610    807 99.563                [001142, 200010, 001206, 200102, 001077]
+         9   35786     13  0.395 [200230444, 001219444, 200083444, 200141444, 200134444]
+        10    3661      2  0.040                                [0011274444, 2001454444]
+
+=== london | 1δ. Κενές τιμές ανά στήλη ===
+              column  empty
+              Number      0
+          Start date      0
+            End date    184
+Start station number      0
+       Start station      0
+  End station number    184
+         End station    184
+          Bike model      0
+ Total duration (ms)    184
+
+=== london | 1ε. Εύρος ημερομηνιών και διάρκειας ===
+       min_start        max_start  min_duration_min  median_duration_min  max_duration_min
+2025-01-01 00:00 2025-12-31 23:59          0.003267            13.278883     301435.213983
