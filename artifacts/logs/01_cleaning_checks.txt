@@ -1,0 +1,52 @@
+# Έλεγχοι καθαρισμού του 01 στα αρχικά δεδομένα 2025
+
+=== chicago | 2. Διαδρομές χωρίς σταθμό ανά rideable_type ===
+rideable_type   trips  no_station  pct_no_station
+        TOTAL 5552994     1859740           33.49
+ classic_bike 1948041        5633            0.29
+electric_bike 3604953     1854107           51.43
+
+=== chicago | 2β. Ποσοστό e-bikes πριν και μετά τον κανόνα σταθμών ===
+ pct_ebike_all  pct_ebike_with_station
+         64.92                   47.41
+
+=== chicago | 3. Εκατοστημόρια συντεταγμένων (διαδρομές με σταθμό) ===
+    coord        min   q0_01pct    q0_1pct   q99_9pct  q99_99pct        max
+start_lat  41.648501  41.668696  41.712353  42.058239  42.064854  42.064854
+start_lng -87.844108 -87.824230 -87.785110 -87.565688 -87.530844 -87.528232
+  end_lat  41.648501  41.666312  41.712353  42.058239  42.064854  42.064854
+  end_lng -87.843960 -87.824230 -87.785230 -87.565688 -87.530844 -87.528232
+
+=== chicago | 4. Διαδρομές με σταθμό εκτός CITY_BBOX (41.6, 42.1, -87.9, -87.5) ===
+ trips_with_station  outside_bbox  pct_outside
+            3693254             0          0.0
+
+=== chicago | 5. Public racks (όνομα σταθμού αφετηρίας ILIKE '%public rack%') ===
+       kind  n_ids  start_trips  pct_ebike
+public_rack   1037        10867     100.00
+    station   2264      3682387      47.25
+
+=== nyc | 2. Διαδρομές χωρίς σταθμό ανά rideable_type ===
+rideable_type    trips  no_station  pct_no_station
+        TOTAL 45771102      147348            0.32
+ classic_bike 13523499        9094            0.07
+electric_bike 32247603      138254            0.43
+
+=== nyc | 2β. Ποσοστό e-bikes πριν και μετά τον κανόνα σταθμών ===
+ pct_ebike_all  pct_ebike_with_station
+         70.45                   70.38
+
+=== nyc | 3. Εκατοστημόρια συντεταγμένων (διαδρομές με σταθμό) ===
+    coord         min  q0_01pct    q0_1pct  q99_9pct  q99_99pct       max
+start_lat   34.014863  40.62967  40.639673  40.87812   40.88602  40.88630
+start_lng -118.481518 -74.03091 -74.017820 -73.85945  -73.84672 -73.84672
+  end_lat    0.000000  40.62757  40.639660  40.87812   40.88602  40.88630
+  end_lng -118.481518 -74.03477 -74.019776 -73.85792  -73.84672   0.00000
+
+=== nyc | 4. Διαδρομές με σταθμό εκτός CITY_BBOX (40.6, 40.92, -74.1, -73.8) ===
+ trips_with_station  outside_bbox  pct_outside
+           45623754            58      0.00013
+
+=== nyc | 5. Public racks (όνομα σταθμού αφετηρίας ILIKE '%public rack%') ===
+   kind  n_ids  start_trips  pct_ebike
+station   2343     45623754      70.38
