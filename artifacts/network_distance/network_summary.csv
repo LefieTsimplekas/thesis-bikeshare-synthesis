@@ -1,0 +1,4 @@
+city,stations,od_pairs,round_trip_pairs,unreachable_pairs,snap_median_m,snap_over_warn,circuity_median,circuity_p05,circuity_p95,pairs_circuity_below_1,types_missing,spearman_duration_haversine,spearman_duration_network
+chicago,1158,129322,1068,0,19.3,0,1.196,1.043,1.53,0,0,0.7635,0.777
+nyc,2263,351735,2060,0,15.8,9,1.27,1.065,1.76,0,0,0.8304,0.835
+london,796,240343,793,0,16.7,0,1.242,1.109,1.549,0,0,0.7908,0.7964
