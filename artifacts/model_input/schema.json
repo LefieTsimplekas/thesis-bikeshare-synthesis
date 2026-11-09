@@ -1,0 +1,80 @@
+{
+  "categorical": {
+    "hour": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10,
+      11,
+      12,
+      13,
+      14,
+      15,
+      16,
+      17,
+      18,
+      19,
+      20,
+      21,
+      22,
+      23
+    ],
+    "day_of_week": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6
+    ],
+    "month": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10,
+      11,
+      12
+    ],
+    "rideable_type": [
+      "classic_bike",
+      "electric_bike"
+    ],
+    "origin_type": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5
+    ],
+    "round_trip": [
+      0,
+      1
+    ]
+  },
+  "continuous": [
+    "duration_min",
+    "distance_km"
+  ],
+  "derived_after_generation": {
+    "is_weekend": "day_of_week in (5, 6)",
+    "part_of_day": "από το hour, με τα όρια του 01",
+    "distance_km": "0 όταν round_trip = 1"
+  },
+  "N_train": 720809,
+  "V_val": 79191
+}

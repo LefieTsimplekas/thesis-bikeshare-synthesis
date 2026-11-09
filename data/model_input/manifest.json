@@ -1,0 +1,38 @@
+{
+  "A_train.parquet": {
+    "rows": 720809,
+    "sha256": "424b0a339043daec017e72085ec7cb5110b0662e8d6862ecac62e36046e3e3ff"
+  },
+  "A_val.parquet": {
+    "rows": 79191,
+    "sha256": "3f3f5e2e8b8250cc660c4329cf930add00e5644bd3d6a104ce36b613ef4a13d6"
+  },
+  "B_train.parquet": {
+    "rows": 720809,
+    "sha256": "469d1899ce32a718320aa56171cbb656dd8018732a02aab184b3bc2f5df9936d"
+  },
+  "B_val.parquet": {
+    "rows": 79191,
+    "sha256": "1cd77f7c9ab64de0ea8e81c6068cc2b56a26f8ca0738c0c431c099204eef77fc"
+  },
+  "C_train.parquet": {
+    "rows": 720809,
+    "sha256": "0b8ae340bf47d6b3a1df85583a47f69f6eac51f748239b86f1c85a62a03ed4d8"
+  },
+  "C_val.parquet": {
+    "rows": 79191,
+    "sha256": "cb1a44c67f36c159f3a536eca4e6d4d9aef15fd0b16bcf7adf5792016a78ce56"
+  },
+  "D_train.parquet": {
+    "rows": 720809,
+    "sha256": "04bc7b68751f4b10ca69d20a62a72b059c62c124bfad07922be0c7ca2548484e"
+  },
+  "D_val.parquet": {
+    "rows": 79191,
+    "sha256": "56028974c49dcaab1cd5d96f5d902962eae1f0ee39082424f8ea2e2dbe4e0d7b"
+  },
+  "london_test.parquet": {
+    "rows": 200000,
+    "sha256": "22b911c7a0cf672aa267634af5ea4d7dcb6219b79b2ebd0a9cab9d348ae7f864"
+  }
+}
