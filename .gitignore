@@ -40,6 +40,8 @@ data/context/osm/cache/
 # ── Artifacts ─────────────────────────────────────────────────────────────────
 # Exclude large/regenerable experiment outputs
 artifacts/oracle_london/
+# Εκπαιδευμένα μοντέλα (.pkl, δεκάδες MB): μένουν τοπικά ή στο Drive
+models/
 
 # Keep small reproducibility artifacts
 !artifacts/model_input/
