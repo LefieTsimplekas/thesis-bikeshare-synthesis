@@ -8,6 +8,7 @@
 #               dependencies από το pyproject.toml και το uv.lock).
 #   2026-11-08  Προσθήκη osmium (pyosmium): ανάγνωση τοπικών αρχείων OSM του Geofabrik
 #               στο 05a, γιατί οι δημόσιοι servers Overpass δεν άντεχαν τα αιτήματα POI.
+#   2026-11-09  Προσθήκη xgboost: TSTR και detection στο 09 (§6).
 
 # ── Core data processing ─────────────────────────────────────────────────────
 duckdb==1.5.2
@@ -21,6 +22,7 @@ requests==2.33.1
 # ── ML / preprocessing ───────────────────────────────────────────────────────
 scikit-learn==1.8.0
 joblib==1.5.3
+xgboost==3.0.5
 
 # ── Generative model ─────────────────────────────────────────────────────────
 synthcity==0.2.12
