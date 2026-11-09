@@ -4,7 +4,9 @@ import duckdb
 import pandas as pd
 
 """
-Create a data quality report for the project's parquet datasets.
+Create a data quality report for the project's parquet datasets
+(06b: runs after 06, checks the files of the pipeline and the model input).
+The raw files (data/raw) are checked separately in 01b and l1b.
 
 The report summarizes, per file and per column:
 - data type
@@ -25,11 +27,10 @@ CSV_OUTPUT_PATH = OUTPUT_DIR / "data_quality_report.csv"
 EXCEL_OUTPUT_PATH = OUTPUT_DIR / "data_quality_report.xlsx"
 
 INPUT_DIRS = [
-    DATA_DIR / "raw",
     DATA_DIR / "processed",
     DATA_DIR / "context",
     DATA_DIR / "model_input",
-]
+]   # τα αρχικά (data/raw) ελέγχονται στο 01b και στο l1b
 
 
 def sql_string(path: Path) -> str:
@@ -60,37 +61,29 @@ def build_file_report(
     parquet_sql_path = sql_string(parquet_path)
     column_info = get_column_info(con, parquet_path)
 
-    total_rows = con.execute(
-        f"SELECT COUNT(*) FROM read_parquet('{parquet_sql_path}')"
-    ).fetchone()[0]
+    # Όλες οι μετρήσεις σε ένα ερώτημα (μία σάρωση ανά αρχείο)
+    counts = ", ".join(
+        'COUNT("' + c.replace('"', '""') + '")' for c in column_info["column_name"]
+    )
+    result = con.execute(
+        f"SELECT COUNT(*), {counts} FROM read_parquet('{parquet_sql_path}')"
+    ).fetchone()
+    total_rows, non_null = result[0], result[1:]
 
     rows = []
-    for _, column in column_info.iterrows():
-        column_name = column["column_name"]
-        column_type = column["column_type"]
-        escaped_column = column_name.replace('"', '""')
-
-        null_count = con.execute(
-            f"""
-            SELECT COUNT(*) - COUNT("{escaped_column}")
-            FROM read_parquet('{parquet_sql_path}')
-            """
-        ).fetchone()[0]
-
-        null_percent = (null_count / total_rows * 100) if total_rows else 0.0
-
+    for (_, column), nn in zip(column_info.iterrows(), non_null):
+        null_count = total_rows - nn
         rows.append(
             {
                 "file": relative_path.as_posix(),
-                "column": column_name,
-                "dtype": column_type,
+                "column": column["column_name"],
+                "dtype": column["column_type"],
                 "rows": total_rows,
                 "null_count": null_count,
-                "null_percent": round(null_percent, 2),
-                "non_null_count": total_rows - null_count,
+                "null_percent": round(null_count / total_rows * 100, 2) if total_rows else 0.0,
+                "non_null_count": nn,
             }
         )
-
     return pd.DataFrame(rows)
 
 
@@ -111,10 +104,7 @@ def create_data_quality_report() -> pd.DataFrame:
         con.close()
 
     report = pd.concat(reports, ignore_index=True)
-    return report.sort_values(
-        ["null_percent", "null_count", "file", "column"],
-        ascending=[False, False, True, True],
-    )
+    return report.sort_values(["file", "column"]).reset_index(drop=True)
 
 
 def save_report(report: pd.DataFrame) -> None:
@@ -136,8 +126,13 @@ def save_report(report: pd.DataFrame) -> None:
 def main() -> None:
     report = create_data_quality_report()
 
-    print("\nTop columns by missing values:")
-    print(report.head(25).to_string(index=False))
+    with_nulls = report[report["null_count"] > 0]
+    print(f"\nFiles checked: {report['file'].nunique()} | columns: {len(report)}")
+    if with_nulls.empty:
+        print("No missing values in any file.")
+    else:
+        print(f"\nColumns with missing values ({len(with_nulls)}):")
+        print(with_nulls.sort_values("null_percent", ascending=False).to_string(index=False))
 
     save_report(report)
 
