@@ -16,10 +16,15 @@
     Διαφορά πίνακα συσχετίσεων μικτών τύπων (Spearman / Cramér's V / correlation
     ratio): νόρμα Frobenius και μέση απόλυτη διαφορά
   Detection    ταξινομητής πραγματικά (T) έναντι S, ίσα πλήθη, 5-fold CV, AUC
-               (0,5 = δεν ξεχωρίζουν)
-  Utility      TSTR: XGBoost παλινδρόμηση της διάρκειας, εκπαίδευση σε S, έλεγχος σε T·
-               MAE και R², με και χωρίς distance_km. Τα πραγματικά baselines
-               υποδειγματοληπτούνται στο ίδιο πλήθος με τα συνθετικά.
+               (0,5 = δεν ξεχωρίζουν). Δύο εκδοχές: με όλες τις στήλες, και χωρίς
+               month και day_of_week (_nocal). Το test έχει 73 ημέρες, οπότε ο
+               συνδυασμός μήνα×ημέρας του είναι αραιός και ξεχωρίζει ακόμη και από
+               πραγματικά δεδομένα του Λονδίνου (R-D). Τυπώνεται και το TVD μήνα×ημέρας.
+  Utility      TSTR με XGBoost, εκπαίδευση σε S, έλεγχος σε T, τρεις εργασίες:
+               1. διάρκεια (παλινδρόμηση): MAE, R², με και χωρίς distance_km
+               2. τύπος ποδηλάτου (ταξινόμηση e-bike/classic): AUC
+               3. απόσταση (παλινδρόμηση, μόνο μη κυκλικές, χωρίς duration_min): MAE, R²
+               Τα πραγματικά baselines υποδειγματοληπτούνται στο ίδιο πλήθος με το test.
   Diversity    κάλυψη κελιών ώρα×ημέρα, μήνα, τύπου σταθμού×τύπου ποδηλάτου
   Plausibility ταχύτητα = distance_km / (duration_min / 60), μη κυκλικές:
                % πάνω από 30 km/h (classic) / 35 km/h (e-bike), Wasserstein ταχύτητας
@@ -111,6 +116,13 @@ def association_matrix(df: pd.DataFrame, cat_cols, num_cols) -> pd.DataFrame:
     return M
 
 
+def tvd_joint(S: pd.DataFrame, T: pd.DataFrame, cols: list) -> float:
+    p = S.groupby(cols).size() / len(S)
+    q = T.groupby(cols).size() / len(T)
+    p, q = p.align(q, fill_value=0)
+    return float(0.5 * (p - q).abs().sum())
+
+
 def speed(df: pd.DataFrame) -> pd.DataFrame:
     d = df[(df.round_trip == 0) & (df.duration_min > 0)]
     return d.assign(speed_kmh=d.distance_km / (d.duration_min / 60))
@@ -166,8 +178,9 @@ def fidelity(S: pd.DataFrame, T: pd.DataFrame, schema: dict) -> tuple[dict, pd.D
     return summary, cols
 
 
-def detection(S: pd.DataFrame, T: pd.DataFrame, schema: dict, seed: int) -> dict:
-    cols = list(schema["categorical"]) + schema["continuous"]
+def detection(S: pd.DataFrame, T: pd.DataFrame, schema: dict, seed: int,
+              drop: tuple = (), tag: str = "") -> dict:
+    cols = [c for c in list(schema["categorical"]) + schema["continuous"] if c not in drop]
     n = min(len(S), len(T))
     X = pd.concat([S.sample(n, random_state=seed)[cols], T.sample(n, random_state=seed)[cols]],
                   ignore_index=True)
@@ -178,18 +191,42 @@ def detection(S: pd.DataFrame, T: pd.DataFrame, schema: dict, seed: int) -> dict
         m = XGBClassifier(**DET_PARAMS, random_state=seed, n_jobs=-1)
         m.fit(X.iloc[tr], y[tr])
         aucs.append(roc_auc_score(y[te], m.predict_proba(X.iloc[te])[:, 1]))
-    return {"detection_AUC": float(np.mean(aucs)), "detection_AUC_std": float(np.std(aucs))}
+    return {f"detection_AUC{tag}": float(np.mean(aucs)),
+            f"detection_AUC{tag}_std": float(np.std(aucs))}
 
 
 def tstr(S: pd.DataFrame, T: pd.DataFrame, schema: dict, seed: int) -> dict:
     out = {}
-    base = [c for c in list(schema["categorical"]) + schema["continuous"] if c != "duration_min"]
+    allc = list(schema["categorical"]) + schema["continuous"]
+
+    # 1. Διάρκεια
+    base = [c for c in allc if c != "duration_min"]
     for tag, feats in [("", base), ("_nodist", [c for c in base if c != "distance_km"])]:
         m = XGBRegressor(**TSTR_PARAMS, random_state=seed, n_jobs=-1)
         m.fit(as_features(S, schema, feats), S["duration_min"])
         pred = m.predict(as_features(T, schema, feats))
         out[f"TSTR_MAE{tag}"] = float(mean_absolute_error(T["duration_min"], pred))
         out[f"TSTR_R2{tag}"] = float(r2_score(T["duration_min"], pred))
+
+    # 2. Τύπος ποδηλάτου (AUC: ανεξάρτητο από το ποσοστό e-bikes κάθε συνόλου)
+    feats = [c for c in allc if c != "rideable_type"]
+    yS = (S["rideable_type"] == "electric_bike").astype(int)
+    yT = (T["rideable_type"] == "electric_bike").astype(int)
+    if yS.nunique() == 2:
+        m = XGBClassifier(**TSTR_PARAMS, random_state=seed, n_jobs=-1)
+        m.fit(as_features(S, schema, feats), yS)
+        out["TSTR_bike_AUC"] = float(roc_auc_score(yT, m.predict_proba(as_features(T, schema, feats))[:, 1]))
+    else:
+        out["TSTR_bike_AUC"] = np.nan
+
+    # 3. Απόσταση (μόνο μη κυκλικές, χωρίς διάρκεια ως είσοδο)
+    feats = [c for c in allc if c not in ("distance_km", "duration_min", "round_trip")]
+    s, t = S[S.round_trip == 0], T[T.round_trip == 0]
+    m = XGBRegressor(**TSTR_PARAMS, random_state=seed, n_jobs=-1)
+    m.fit(as_features(s, schema, feats), s["distance_km"])
+    pred = m.predict(as_features(t, schema, feats))
+    out["TSTR_dist_MAE"] = float(mean_absolute_error(t["distance_km"], pred))
+    out["TSTR_dist_R2"] = float(r2_score(t["distance_km"], pred))
     return out
 
 
@@ -232,17 +269,22 @@ def evaluate(name: str, S: pd.DataFrame, T: pd.DataFrame, schema: dict, seed: in
     S = add_derived(S)
     fid, cols = fidelity(S, T, schema)
     res = {"dataset": name, "rows": len(S), **fid}
+    res["TVD_month_x_dow"] = tvd_joint(S, T, ["month", "day_of_week"])
     print(f"  fidelity: mean TVD {fid['mean_TVD_cat']:.4f} | mean KS {fid['mean_KS_num']:.4f} | "
-          f"Corr.Sim {fid['CorrelationSimilarity']:.4f} | Cont.Sim {fid['ContingencySimilarity']:.4f}")
+          f"Corr.Sim {fid['CorrelationSimilarity']:.4f} | Cont.Sim {fid['ContingencySimilarity']:.4f} | "
+          f"TVD month x day {res['TVD_month_x_dow']:.4f}")
     res.update(detection(S, T, schema, seed))
-    print(f"  detection AUC {res['detection_AUC']:.4f}")
+    res.update(detection(S, T, schema, seed, drop=("month", "day_of_week"), tag="_nocal"))
+    print(f"  detection AUC {res['detection_AUC']:.4f} | without month/day {res['detection_AUC_nocal']:.4f}")
     res.update(tstr(S, T, schema, seed))
-    print(f"  TSTR MAE {res['TSTR_MAE']:.3f} (R² {res['TSTR_R2']:.3f}) | "
-          f"without distance MAE {res['TSTR_MAE_nodist']:.3f} (R² {res['TSTR_R2_nodist']:.3f})")
+    print(f"  TSTR duration: MAE {res['TSTR_MAE']:.3f} (R2 {res['TSTR_R2']:.3f}) | "
+          f"without distance MAE {res['TSTR_MAE_nodist']:.3f} (R2 {res['TSTR_R2_nodist']:.3f})")
+    print(f"  TSTR bike type: AUC {res['TSTR_bike_AUC']:.4f} | "
+          f"TSTR distance: MAE {res['TSTR_dist_MAE']:.3f} km (R2 {res['TSTR_dist_R2']:.3f})")
     res.update(diversity(S, T))
     res.update(plausibility(S, T))
     print(f"  impossible speed {res['pct_impossible_speed']:.2f}% | e-bike {res['pct_ebike']:.1f}% | "
-          f"round trip {res['pct_round_trip']:.1f}% | coverage hour×day {res['coverage_hour_x_dow']:.3f}")
+          f"round trip {res['pct_round_trip']:.1f}% | coverage hour x day {res['coverage_hour_x_dow']:.3f}")
 
     EVAL_DIR.mkdir(parents=True, exist_ok=True)
     cols.to_csv(EVAL_DIR / f"columns_{name}.csv", index=False)
