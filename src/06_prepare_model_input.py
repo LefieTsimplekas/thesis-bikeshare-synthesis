@@ -62,7 +62,7 @@ CATEGORICAL = {
     "day_of_week": list(range(7)),
     "month": list(range(1, 13)),
     "rideable_type": ["classic_bike", "electric_bike"],
-    "origin_type": None,          # συμπληρώνεται από τους τύπους του 05b
+    "origin_type": None,          # γεμίζει αυτόματα στο main() από το station_types.parquet (05b)
     "round_trip": [0, 1],
 }
 CONTINUOUS = ["duration_min", "distance_km"]
@@ -200,8 +200,10 @@ def main() -> None:
     written[test_out.name] = test
     print(f"london_test {len(test):>9,} rows -> {test_out}")
 
-    # Σχήμα: κατηγορίες origin_type από όλους τους τύπους που εμφανίζονται
-    types = sorted(set().union(*(set(d.origin_type) for d in written.values())))
+    # Σχήμα: οι κατηγορίες του origin_type είναι όλοι οι τύποι που όρισε το 05b
+    types = sorted(int(t) for t in
+                   pd.read_parquet(OSM_DIR / "station_types.parquet", columns=["origin_type"])
+                   .origin_type.unique())
     schema = {
         "categorical": {c: (types if v is None else v) for c, v in CATEGORICAL.items()},
         "continuous": CONTINUOUS,
