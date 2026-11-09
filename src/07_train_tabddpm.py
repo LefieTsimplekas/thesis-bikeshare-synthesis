@@ -29,6 +29,11 @@
   artifacts/training/tabddpm_{σενάριο}.json       (παράμετροι, χρόνοι, απώλεια)
 """
 
+import os
+# Το Colab ορίζει MPLBACKEND για το notebook· το matplotlib του ξεχωριστού
+# περιβάλλοντος δεν το γνωρίζει και το synthcity σταματά στην εισαγωγή.
+os.environ["MPLBACKEND"] = "Agg"
+
 import argparse
 import json
 import math
