@@ -21,7 +21,8 @@ data/processed/*
 !data/processed/*_split_manifest.json
 data/tmp/
 data/synthetic/
-data/model_input/
+data/model_input/*
+!data/model_input/manifest.json
 data/query.sql
 data/raw.zip
 
