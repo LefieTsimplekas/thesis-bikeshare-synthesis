@@ -31,6 +31,7 @@
 
 Χρήση:
   python src/09_evaluate.py --synthetic data/synthetic/tabddpm_D.parquet ...
+  python src/09_evaluate.py --synthetic "data/synthetic/tabddpm_*_s*_g*.parquet"   (μοτίβο)
   python src/09_evaluate.py --real A B C D
   (τα δύο μαζί επιτρέπονται)
 
@@ -41,6 +42,7 @@
 """
 
 import argparse
+import glob
 import itertools
 from pathlib import Path
 
@@ -305,7 +307,10 @@ def main() -> None:
     print(f"London test: {len(T):,} rows")
 
     results = []
-    for path in args.synthetic:
+    # Τα μοτίβα (π.χ. data/synthetic/tabddpm_A_s*_g*.parquet) αναπτύσσονται εδώ,
+    # γιατί το PowerShell δεν τα αναπτύσσει μόνο του.
+    paths = sorted({p for pat in args.synthetic for p in (glob.glob(pat) or [pat])})
+    for path in paths:
         S = pd.read_parquet(path)
         results.append(evaluate(Path(path).stem, S, T, schema, args.seed))
     for sc in args.real:

@@ -19,14 +19,19 @@
      βελτιστοποίησης και μετατρέπονται σε εποχές για το μέγεθος του συνόλου.
   4. Γένεση: χωρίς το φίλτρο απόρριψης του plugin.generate() (βλ. run()).
 
+Seeds (§7, 3 training × 3 generation seeds):
+  training seeds 42, 43, 44 · generation seeds 1, 2, 3 ανά εκπαιδευμένο μοντέλο
+
 Χρήση:
   python src/07_train_tabddpm.py --scenario D --pilot-rows 50000 --steps 2000 --gen-rows 20000
-  python src/07_train_tabddpm.py --scenario A B C D
+  python src/07_train_tabddpm.py --scenario A --seed 43 --gen-seeds 1 2 3
+  python src/07_train_tabddpm.py --scenario A --seed 42 --generate-only --gen-seeds 1 2 3
 
 Έξοδοι ανά σενάριο:
-  data/synthetic/tabddpm_{σενάριο}.parquet       (γένεση + is_weekend, part_of_day)
-  models/tabddpm_{σενάριο}.pkl                    (εκπαιδευμένο μοντέλο)
-  artifacts/training/tabddpm_{σενάριο}.json       (παράμετροι, χρόνοι, απώλεια)
+  data/synthetic/tabddpm_{σενάριο}_s{seed}_g{gen}.parquet  (γένεση + is_weekend, part_of_day)
+  models/tabddpm_{σενάριο}_s{seed}.pkl                      (εκπαιδευμένο μοντέλο)
+  artifacts/training/tabddpm_{σενάριο}_s{seed}.json         (παράμετροι, χρόνοι, απώλεια, γενέσεις)
+  Η πρώτη εκτέλεση (seed 42) έχει ονόματα χωρίς seed (tabddpm_{σενάριο}.*).
 """
 
 import os
@@ -47,7 +52,7 @@ import torch
 import synthcity.plugins.core.models.tabular_ddpm as tddpm
 from synthcity.plugins import Plugins
 from synthcity.plugins.core.dataloader import GenericDataLoader
-from synthcity.utils.serialization import save_to_file
+from synthcity.utils.serialization import load_from_file, save_to_file
 
 from config import SAMPLING_SEED, TABDDPM_PARAMS
 from model_io import load_schema, load_table, encode, decode, add_derived, category_counts
@@ -100,9 +105,8 @@ def build_plugin(n_rows: int, params: dict, device: str, seed: int):
 
 
 # ---------------------------------------------------------------------------
-def run(scenario: str, args, schema: dict, device: str) -> None:
-    print(f"\n===== TabDDPM | scenario {scenario} =====")
-    seed = SAMPLING_SEED
+def train_model(scenario: str, args, schema: dict, device: str, seed: int):
+    """Εκπαίδευση ενός TabDDPM με το δοσμένο training seed."""
     torch.manual_seed(seed)
     np.random.seed(seed)
     patch_synthcity(schema, seed)
@@ -123,64 +127,103 @@ def run(scenario: str, args, schema: dict, device: str) -> None:
         params["steps"] = args.steps
     plugin, n_epochs, spe = build_plugin(len(X), params, device, seed)
     print(f"Rows {len(X):,} | batch {params['batch_size']} | {spe} steps/epoch | "
-          f"{n_epochs} epochs ≈ {n_epochs * spe:,} steps | device {device}")
+          f"{n_epochs} epochs ≈ {n_epochs * spe:,} steps | device {device} | seed {seed}")
 
     t0 = time.time()
     plugin.fit(GenericDataLoader(X))
     t_fit = time.time() - t0
     real_steps = n_epochs * spe
     print(f"Training time {t_fit / 60:.1f} min ({real_steps / t_fit:.1f} steps/s)")
-
-    # Γένεση απευθείας από το μοντέλο: το plugin.generate() του synthcity απορρίπτει
-    # και ξαναπαράγει γραμμές που βγαίνουν εκτός των ορίων του train, κάτι που αλλάζει
-    # την κατανομή και κρύβει αδυναμίες του μοντέλου. Εδώ κρατάμε ό,τι παράγει.
-    t0 = time.time()
     plugin.model.dataloader = None           # δεν χρειάζεται πια· δεν αποθηκεύεται
-    with torch.no_grad():
-        syn = plugin.model.generate(args.gen_rows)
-    syn = plugin.encoder.inverse_transform(syn)
-    t_gen = time.time() - t0
-    print(f"Generation of {len(syn):,} rows: {t_gen / 60:.1f} min")
 
-    syn = add_derived(decode(syn[X.columns], schema))
-
-    tag = f"tabddpm_{scenario}" + ("_pilot" if args.pilot_rows else "")
-    for d in (SYNTHETIC_DIR, MODELS_DIR, TRAIN_LOG_DIR):
-        d.mkdir(parents=True, exist_ok=True)
-    syn.to_parquet(SYNTHETIC_DIR / f"{tag}.parquet", index=False)
-    save_to_file(MODELS_DIR / f"{tag}.pkl", plugin)
-
+    info = {"train_rows": len(X), "params": params, "epochs": n_epochs, "steps": real_steps,
+            "fit_minutes": round(t_fit / 60, 2), "steps_per_second": round(real_steps / t_fit, 2)}
     loss = getattr(plugin, "loss_history", None)
-    loss = None if loss is None else pd.DataFrame(loss).values.tolist()
-    log = {
-        "scenario": scenario, "pilot_rows": args.pilot_rows, "train_rows": len(X),
-        "params": params, "epochs": n_epochs, "steps": real_steps, "device": device,
-        "torch_threads": torch.get_num_threads(), "fit_minutes": round(t_fit / 60, 2),
-        "steps_per_second": round(real_steps / t_fit, 2), "generate_rows": len(syn),
-        "generate_minutes": round(t_gen / 60, 2), "seed": seed,
-        "loss_history_[step,mloss,gloss,loss]": loss,
-    }
-    (TRAIN_LOG_DIR / f"{tag}.json").write_text(json.dumps(log, indent=1), encoding="utf-8")
+    info["loss_history_[step,mloss,gloss,loss]"] = (
+        None if loss is None else pd.DataFrame(loss).values.tolist())
+    return plugin, train, info
 
-    # Γρήγορος έλεγχος: ποσοστά e-bikes / κυκλικών και διάμεσοι, πραγματικά έναντι συνθετικών
-    print("Quick check (train vs synthetic):")
-    for name, d in [("train", train), ("synthetic", syn)]:
+
+def generate(plugin, schema: dict, n: int, gen_seed: int) -> tuple[pd.DataFrame, float]:
+    """Γένεση απευθείας από το μοντέλο με δικό της seed. Το plugin.generate() του
+    synthcity απορρίπτει και ξαναπαράγει γραμμές εκτός των ορίων του train, κάτι που
+    αλλάζει την κατανομή και κρύβει αδυναμίες του μοντέλου· εδώ κρατάμε ό,τι παράγει."""
+    torch.manual_seed(gen_seed)
+    torch.cuda.manual_seed_all(gen_seed)
+    np.random.seed(gen_seed)
+    t0 = time.time()
+    with torch.no_grad():
+        syn = plugin.model.generate(n)
+    syn = plugin.encoder.inverse_transform(syn)
+    cols = list(schema["categorical"]) + schema["continuous"]
+    return add_derived(decode(syn[cols], schema)), time.time() - t0
+
+
+def quick_check(train: pd.DataFrame | None, syn: pd.DataFrame) -> None:
+    rows = ([("train", train)] if train is not None else []) + [("synthetic", syn)]
+    for name, d in rows:
         print(f"  {name:<9} e-bike {100 * (d.rideable_type == 'electric_bike').mean():5.1f}% | "
               f"round trip {100 * d.round_trip.mean():4.1f}% | "
               f"median duration {d.duration_min.median():5.2f} min | "
               f"median distance {d.distance_km.median():5.2f} km")
-    print(f"Saved {SYNTHETIC_DIR / (tag + '.parquet')}")
+
+
+def run(scenario: str, args, schema: dict, device: str) -> None:
+    seed = args.seed
+    print(f"\n===== TabDDPM | scenario {scenario} | training seed {seed} =====")
+    for d in (SYNTHETIC_DIR, MODELS_DIR, TRAIN_LOG_DIR):
+        d.mkdir(parents=True, exist_ok=True)
+
+    pilot = "_pilot" if args.pilot_rows else ""
+    model_tag = f"tabddpm_{scenario}_s{seed}{pilot}"
+    log_path = TRAIN_LOG_DIR / f"{model_tag}.json"
+
+    if args.generate_only:
+        # Μοντέλο που έχει ήδη εκπαιδευτεί. Η πρώτη εκτέλεση (seed 42) είχε όνομα χωρίς seed.
+        candidates = [MODELS_DIR / f"{model_tag}.pkl", MODELS_DIR / f"tabddpm_{scenario}{pilot}.pkl"]
+        path = next((c for c in candidates if c.exists()), None)
+        if path is None:
+            raise FileNotFoundError(f"No saved model among {[str(c) for c in candidates]}")
+        print(f"Loading {path}")
+        plugin = load_from_file(path)
+        train = None
+        old = next((p for p in [log_path, TRAIN_LOG_DIR / f"tabddpm_{scenario}{pilot}.json"]
+                    if p.exists()), None)
+        log = json.loads(old.read_text(encoding="utf-8")) if old else {}
+    else:
+        plugin, train, info = train_model(scenario, args, schema, device, seed)
+        save_to_file(MODELS_DIR / f"{model_tag}.pkl", plugin)
+        log = {"scenario": scenario, "pilot_rows": args.pilot_rows, "seed": seed,
+               "device": device, "torch_threads": torch.get_num_threads(), **info}
+
+    gens = log.get("generations", {})
+    for g in args.gen_seeds:
+        syn, t_gen = generate(plugin, schema, args.gen_rows, g)
+        out = SYNTHETIC_DIR / f"{model_tag}_g{g}.parquet"
+        syn.to_parquet(out, index=False)
+        gens[str(g)] = {"rows": len(syn), "minutes": round(t_gen / 60, 2), "file": out.name}
+        print(f"Generation seed {g}: {len(syn):,} rows in {t_gen / 60:.1f} min -> {out}")
+        quick_check(train, syn)
+        train = None                         # το train τυπώνεται μόνο την πρώτη φορά
+
+    log.update({"scenario": scenario, "seed": seed, "generations": gens})
+    log_path.write_text(json.dumps(log, indent=1), encoding="utf-8")
 
 
 def main() -> None:
     ap = argparse.ArgumentParser()
     ap.add_argument("--scenario", nargs="+", default=["A", "B", "C", "D"],
                     choices=["A", "B", "C", "D"])
+    ap.add_argument("--seed", type=int, default=SAMPLING_SEED, help="training seed")
+    ap.add_argument("--gen-seeds", type=int, nargs="+", default=[1],
+                    help="seeds γένεσης· ένα αρχείο συνθετικών ανά seed")
+    ap.add_argument("--generate-only", action="store_true",
+                    help="χωρίς εκπαίδευση: φορτώνει το αποθηκευμένο μοντέλο του --seed")
     ap.add_argument("--pilot-rows", type=int, default=0,
                     help="πιλοτική εκτέλεση: τυχαίο υποσύνολο τόσων γραμμών του train")
     ap.add_argument("--steps", type=int, default=0, help="αντικαθιστά το TABDDPM_PARAMS['steps']")
     ap.add_argument("--gen-rows", type=int, default=200_000,
-                    help="συνθετικές γραμμές (προεπιλογή: όσες το London test)")
+                    help="συνθετικές γραμμές ανά seed γένεσης (προεπιλογή: όσες το London test)")
     args = ap.parse_args()
 
     device = "cuda" if torch.cuda.is_available() else "cpu"
