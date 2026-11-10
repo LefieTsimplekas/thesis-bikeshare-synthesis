@@ -179,22 +179,30 @@ def run(scenario: str, args, schema: dict, device: str) -> None:
     log_path = TRAIN_LOG_DIR / f"{model_tag}.json"
 
     if args.generate_only:
-        # Μοντέλο που έχει ήδη εκπαιδευτεί. Η πρώτη εκτέλεση (seed 42) είχε όνομα χωρίς seed.
-        candidates = [MODELS_DIR / f"{model_tag}.pkl", MODELS_DIR / f"tabddpm_{scenario}{pilot}.pkl"]
+        # Μοντέλο που έχει ήδη εκπαιδευτεί. Η πρώτη εκτέλεση (seed 42) είχε όνομα χωρίς seed·
+        # το παλιό όνομα δοκιμάζεται ΜΟΝΟ για το seed 42, ώστε άλλο seed να μη φορτώσει ποτέ
+        # σιωπηλά το μοντέλο του 42.
+        legacy = seed == SAMPLING_SEED
+        candidates = [MODELS_DIR / f"{model_tag}.pkl"]
+        if legacy:
+            candidates.append(MODELS_DIR / f"tabddpm_{scenario}{pilot}.pkl")
         path = next((c for c in candidates if c.exists()), None)
         if path is None:
             raise FileNotFoundError(f"No saved model among {[str(c) for c in candidates]}")
         print(f"Loading {path}")
         plugin = load_from_file(path)
         train = None
-        old = next((p for p in [log_path, TRAIN_LOG_DIR / f"tabddpm_{scenario}{pilot}.json"]
-                    if p.exists()), None)
+        logs = [log_path] + ([TRAIN_LOG_DIR / f"tabddpm_{scenario}{pilot}.json"] if legacy else [])
+        old = next((p for p in logs if p.exists()), None)
         log = json.loads(old.read_text(encoding="utf-8")) if old else {}
     else:
         plugin, train, info = train_model(scenario, args, schema, device, seed)
         save_to_file(MODELS_DIR / f"{model_tag}.pkl", plugin)
         log = {"scenario": scenario, "pilot_rows": args.pilot_rows, "seed": seed,
                "device": device, "torch_threads": torch.get_num_threads(), **info}
+        # Το log γράφεται αμέσως, ώστε οι πληροφορίες εκπαίδευσης να μη χαθούν αν η
+        # συνεδρία κοπεί κατά τη γένεση.
+        log_path.write_text(json.dumps(log, indent=1), encoding="utf-8")
 
     gens = log.get("generations", {})
     for g in args.gen_seeds:
@@ -205,9 +213,9 @@ def run(scenario: str, args, schema: dict, device: str) -> None:
         print(f"Generation seed {g}: {len(syn):,} rows in {t_gen / 60:.1f} min -> {out}")
         quick_check(train, syn)
         train = None                         # το train τυπώνεται μόνο την πρώτη φορά
-
-    log.update({"scenario": scenario, "seed": seed, "generations": gens})
-    log_path.write_text(json.dumps(log, indent=1), encoding="utf-8")
+        # Ενημέρωση μετά από κάθε γένεση (αντέχει σε διακοπή της συνεδρίας).
+        log.update({"scenario": scenario, "seed": seed, "generations": gens})
+        log_path.write_text(json.dumps(log, indent=1), encoding="utf-8")
 
 
 def main() -> None:

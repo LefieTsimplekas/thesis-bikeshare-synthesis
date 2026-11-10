@@ -68,7 +68,7 @@ Run in this order from the repository root (`python src/<script>.py`).
 | 06b | `06b_data_quality_report.py` | Missing values in all pipeline files | local |
 | 07 | `07_train_tabddpm.py` | Train TabDDPM per scenario and generate 200,000 trips | **Colab GPU** |
 | 09 | `09_evaluate.py` | Fidelity, detection, TSTR (3 tasks), diversity, plausibility vs the London test | local |
-| 10 | *(to do)* | Seeds, transfer gap, statistical tests | local |
+| 10 | *(to do)* | Level 1 over seeds: transfer gap, Δ, hierarchical bootstrap CI, Cliff's δ | local |
 
 `96_build_weather_context.py` and `97_add_weather_to_final_dataset.py` (weather) are outside the main flow.
 
@@ -98,6 +98,9 @@ TabDDPM runs at ~1.2 steps/s on a laptop CPU and ~12.5 steps/s on a Colab T4
 3. Run the cells in order. The notebook builds a separate Python 3.11 environment with `uv`
    (Colab ships Python 3.13, for which torch 2.2.2 is not available), mounts Drive and clones this repository.
 4. Outputs are written to `My Drive/thesis/outputs/` (synthetic data, models, training logs).
+5. Seeds (section 6): cell 6a shows what is already on Drive, cell 6b runs only what is missing
+   (a saved model is reused with `--generate-only`; half-written files are redone) and then
+   disconnects the runtime. After an interrupted session, rerun cells 4, 6, 7, 6a, 6b.
 
 ## Reproducibility
 
