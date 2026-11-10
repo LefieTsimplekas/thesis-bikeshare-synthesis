@@ -1,0 +1,59 @@
+>> src/07_train_tabddpm.py --scenario A --seed 42 --gen-seeds 1 2 3 --generate-only
+[transformers] Disabling PyTorch because PyTorch >= 2.6 is required but found 2.2.2
+[transformers] PyTorch was not found. Models won't be available and only tokenizers, configuration and file/data utilities can be used.
+[KeOps] Compiling cuda jit compiler engine ... OK
+[pyKeOps] Compiling nvrtc binder for python ... OK
+
+===== TabDDPM | scenario A | training seed 42 =====
+Loading models/tabddpm_A.pkl
+Generation seed 1: 200,000 rows in 8.8 min -> data/synthetic/tabddpm_A_s42_g1.parquet
+  synthetic e-bike  47.2% | round trip  4.2% | median duration  9.89 min | median distance  2.09 km
+Generation seed 2: 200,000 rows in 8.9 min -> data/synthetic/tabddpm_A_s42_g2.parquet
+  synthetic e-bike  47.0% | round trip  4.1% | median duration  9.90 min | median distance  2.09 km
+Generation seed 3: 200,000 rows in 8.9 min -> data/synthetic/tabddpm_A_s42_g3.parquet
+  synthetic e-bike  47.1% | round trip  4.1% | median duration  9.86 min | median distance  2.08 km
+
+>> src/07_train_tabddpm.py --scenario A --seed 43 --gen-seeds 1 2 3
+[transformers] Disabling PyTorch because PyTorch >= 2.6 is required but found 2.2.2
+[transformers] PyTorch was not found. Models won't be available and only tokenizers, configuration and file/data utilities can be used.
+[2026-11-10T19:27:32.719827+0000][11443][CRITICAL] Error importing TabularGoggle: No module named 'dgl'
+[2026-11-10T19:27:32.723689+0000][11443][CRITICAL] module disabled: /content/py311/lib/python3.11/site-packages/synthcity/plugins/generic/plugin_goggle.py
+
+===== TabDDPM | scenario A | training seed 43 =====
+Rows 720,809 | batch 4096 | 176 steps/epoch | 114 epochs ≈ 20,064 steps | device cuda | seed 43
+
+Training time 27.2 min (12.3 steps/s)
+Generation seed 1: 200,000 rows in 9.0 min -> data/synthetic/tabddpm_A_s43_g1.parquet
+  train     e-bike  46.9% | round trip  4.1% | median duration  9.87 min | median distance  2.09 km
+  synthetic e-bike  47.0% | round trip  4.2% | median duration  9.96 min | median distance  2.08 km
+Generation seed 2: 200,000 rows in 9.3 min -> data/synthetic/tabddpm_A_s43_g2.parquet
+  synthetic e-bike  46.8% | round trip  4.2% | median duration  9.97 min | median distance  2.08 km
+Generation seed 3: 200,000 rows in 9.4 min -> data/synthetic/tabddpm_A_s43_g3.parquet
+  synthetic e-bike  46.8% | round trip  4.1% | median duration  9.95 min | median distance  2.07 km
+
+>> src/07_train_tabddpm.py --scenario A --seed 44 --gen-seeds 1 2 3
+[transformers] Disabling PyTorch because PyTorch >= 2.6 is required but found 2.2.2
+[transformers] PyTorch was not found. Models won't be available and only tokenizers, configuration and file/data utilities can be used.
+[2026-11-10T20:22:39.585259+0000][26062][CRITICAL] Error importing TabularGoggle: No module named 'dgl'
+[2026-11-10T20:22:39.589057+0000][26062][CRITICAL] module disabled: /content/py311/lib/python3.11/site-packages/synthcity/plugins/generic/plugin_goggle.py
+
+===== TabDDPM | scenario A | training seed 44 =====
+Rows 720,809 | batch 4096 | 176 steps/epoch | 114 epochs ≈ 20,064 steps | device cuda | seed 44
+
+Training time 27.1 min (12.4 steps/s)
+Generation seed 1: 200,000 rows in 8.8 min -> data/synthetic/tabddpm_A_s44_g1.parquet
+  train     e-bike  46.9% | round trip  4.1% | median duration  9.87 min | median distance  2.09 km
+  synthetic e-bike  47.0% | round trip  4.0% | median duration  9.87 min | median distance  2.09 km
+Generation seed 2: 200,000 rows in 8.8 min -> data/synthetic/tabddpm_A_s44_g2.parquet
+  synthetic e-bike  46.8% | round trip  4.0% | median duration  9.87 min | median distance  2.09 km
+Generation seed 3: 200,000 rows in 8.9 min -> data/synthetic/tabddpm_A_s44_g3.parquet
+  synthetic e-bike  46.8% | round trip  3.9% | median duration  9.85 min | median distance  2.08 km
+
+Τέλος σε 136 λεπτά
+
+A  s42  μοντέλο ✓   γενέσεις έτοιμες: [1, 2, 3]
+A  s43  μοντέλο ✓   γενέσεις έτοιμες: [1, 2, 3]
+A  s44  μοντέλο ✓   γενέσεις έτοιμες: [1, 2, 3]
+
+Έτοιμα: 9/9 αρχεία · απομένουν ~0.0 ώρες GPU
+Συγχρονισμός Drive και αποσύνδεση runtime...
