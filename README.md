@@ -113,6 +113,7 @@ TabDDPM runs at ~1.2 steps/s on a laptop CPU and ~12.5 steps/s on a Colab T4
 |---|---|
 | Data preparation (01–06b, L1–L2) | done, logged |
 | Real-data baselines R-A … R-D (09) | done |
-| Level 1, TabDDPM, one seed (A, B, C, D) | trained (Colab T4, ~36 min each); evaluation pending |
+| Level 1, TabDDPM, one seed (A, B, C, D) | trained and evaluated |
+| Level 1 seeds (3 training × 3 generation) | running on Colab |
 | Seeds and statistical analysis (10) | to do |
 | Level 2 (CTGAN, TVAE, GaussianCopula) | to do |
