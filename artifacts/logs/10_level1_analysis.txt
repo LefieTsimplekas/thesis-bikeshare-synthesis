@@ -1,0 +1,63 @@
+﻿Not used (no seed in name): tabddpm_A, tabddpm_B, tabddpm_C, tabddpm_D
+Seeded runs: 9
+  A: 3 models, 9 runs  {42: [1, 2, 3], 43: [1, 2, 3], 44: [1, 2, 3]}
+
+===== Scenario means [95% hierarchical bootstrap CI]; delta = synthetic - real =====
+
+Detection AUC (no calendar) (lower is better)
+  A: 0.8071 [0.8065, 0.8077]  real 0.8080  delta -0.0010 [-0.0016, -0.0003]  sd models 0.0006 | sd gens 0.0003
+
+Mean TVD (categorical) (lower is better)
+  A: 0.1500 [0.1498, 0.1502]  real 0.1497  delta +0.0003 [+0.0000, +0.0005]  sd models 0.0001 | sd gens 0.0004
+
+Mean KS (continuous) (lower is better)
+  A: 0.1391 [0.1381, 0.1403]  real 0.1369  delta +0.0022 [+0.0012, +0.0034]  sd models 0.0011 | sd gens 0.0008
+
+Mean W1 norm. (continuous) (lower is better)
+  A: 0.2110 [0.2101, 0.2120]  real 0.2061  delta +0.0048 [+0.0039, +0.0058]  sd models 0.0006 | sd gens 0.0016
+
+Contingency similarity (higher is better)
+  A: 0.7592 [0.7588, 0.7596]  real 0.7588  delta +0.0004 [-0.0001, +0.0008]  sd models 0.0004 | sd gens 0.0005
+
+Correlation similarity (higher is better)
+  A: 0.9774 [0.9760, 0.9792]  real 0.9762  delta +0.0012 [-0.0002, +0.0030]  sd models 0.0017 | sd gens 0.0006
+
+Association matrix diff. (Frobenius) (lower is better)
+  A: 0.3453 [0.3439, 0.3467]  real 0.3513  delta -0.0060 [-0.0074, -0.0046]  sd models 0.0011 | sd gens 0.0018
+
+TSTR duration R2 (higher is better)
+  A: 0.4018 [0.4012, 0.4023]  real 0.4004  delta +0.0015 [+0.0008, +0.0019]  sd models 0.0004 | sd gens 0.0008
+
+TSTR duration MAE (min) (lower is better)
+  A: 5.3397 [5.3270, 5.3560]  real 5.3401  delta -0.0003 [-0.0131, +0.0159]  sd models 0.0152 | sd gens 0.0095
+
+TSTR bike type AUC (higher is better)
+  A: 0.6614 [0.6600, 0.6625]  real 0.6573  delta +0.0042 [+0.0028, +0.0052]  sd models 0.0013 | sd gens 0.0010
+
+TSTR distance MAE (km) (lower is better)
+  A: 1.5367 [1.5350, 1.5383]  real 1.5357  delta +0.0010 [-0.0007, +0.0026]  sd models 0.0016 | sd gens 0.0017
+
+W1 speed (km/h) (lower is better)
+  A: 1.3181 [1.2591, 1.3674]  real 1.3892  delta -0.0711 [-0.1302, -0.0218]  sd models 0.0557 | sd gens 0.0084
+
+% impossible speed (descriptive)
+  A: 0.5030 [0.4514, 0.5659]  real 0.5473  delta -0.0444 [-0.0959, +0.0186]  sd models 0.0616 | sd gens 0.0254
+
+===== Share of variance from training seeds (rest: generation seeds) =====
+scenario                  A
+metric                     
+ContingencySimilarity  0.09
+CorrelationSimilarity  0.89
+TSTR_MAE               0.69
+TSTR_R2                0.00
+TSTR_bike_AUC          0.57
+TSTR_dist_MAE          0.36
+W1_speed               0.98
+assoc_frobenius        0.05
+detection_AUC_nocal    0.79
+mean_KS_num            0.59
+mean_TVD_cat           0.00
+mean_W1norm_num        0.00
+pct_impossible_speed   0.85
+
+Saved level1_summary.csv, level1_contrasts.csv, level1_variance.csv in artifacts\evaluation
