@@ -172,7 +172,7 @@ def better(diff: float, cis: list, first: str, second: str, direction) -> str:
     Welch) δεν περιέχει το 0."""
     cis = [(lo, hi) for lo, hi in cis if not np.isnan(lo)]
     if direction is None or not cis or any(lo <= 0 <= hi for lo, hi in cis):
-        return "–"
+        return "-"
     first_higher = diff > 0
     return first if first_higher == (direction == "high") else second
 
