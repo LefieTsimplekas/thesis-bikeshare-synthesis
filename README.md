@@ -68,7 +68,7 @@ Run in this order from the repository root (`python src/<script>.py`).
 | 06b | `06b_data_quality_report.py` | Missing values in all pipeline files | local |
 | 07 | `07_train_tabddpm.py` | Train TabDDPM per scenario and generate 200,000 trips | **Colab GPU** |
 | 09 | `09_evaluate.py` | Fidelity, detection, TSTR (3 tasks), diversity, plausibility vs the London test | local |
-| 10 | `10_level1_analysis.py` | Level 1 over seeds (unit = trained model): scenario means, Δ vs R-*, A/B/C contrasts and transfer gap vs D with hierarchical bootstrap and Welch CIs, Cliff's δ, variance split training/generation | local |
+| 10 | `10_level1_analysis.py` | Level 1 over seeds (unit = trained model): scenario means, Δ vs R-*, A/B/C contrasts and transfer gap vs D with hierarchical bootstrap and Welch CIs, Cliff's δ, variance split training/generation, every Δ and contrast also as % of the transfer gap | local |
 
 `96_build_weather_context.py` and `97_add_weather_to_final_dataset.py` (weather) are outside the main flow.
 

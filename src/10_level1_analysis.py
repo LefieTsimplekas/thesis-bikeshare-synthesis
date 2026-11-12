@@ -24,6 +24,15 @@
      (περιγραφικό μέγεθος επίδρασης) και, ως έλεγχο ευαισθησίας, Welch t-CI στους μέσους
      των μοντέλων. Δίπλα δίνεται και το αντίστοιχο χάσμα των πραγματικών (R-X − R-Y).
      «Νικητής» δηλώνεται μόνο όταν και τα δύο διαστήματα αποκλείουν το 0.
+  5. Πρακτική σημασία: κάθε Δ και κάθε αντίθεση καθεστώτων εκφράζεται και ως % του
+     transfer gap (απόσταση από το oracle). Αναφορά (ref) = μέσος του συνθετικού D όταν
+     υπάρχει, αλλιώς προσωρινά το R-D (πραγματικά δεδομένα Λονδίνου).
+       Δ_X        → 100 · Δ_X / (X − ref)
+       X − Y      → 100 · (X − Y) / max(|X − ref|, |Y − ref|)
+     δηλαδή τι μέρος της απόστασης του χειρότερου από τα δύο σενάρια από το oracle
+     κλείνει το καλύτερο. Οι αντιθέσεις X − D (το ίδιο το gap) δεν παίρνουν ποσοστό,
+     ούτε οι μετρικές όπου ένα σενάριο φτάνει ή ξεπερνά το oracle (π.χ. MAE διάρκειας)
+     ή που δεν έχουν κατεύθυνση.
 
 Σημείωση: με 3 μοντέλα το bootstrap τείνει να στενεύει το διάστημα (η διακύμανση
 μεταξύ μοντέλων υποεκτιμάται κατά (n−1)/n). Γι' αυτό δίνεται και το Welch t-CI, που
@@ -167,6 +176,18 @@ def variance_components(V: np.ndarray) -> tuple[float, float]:
     return float(max(0.0, (ms_between - ms_within) / n_g)), float(ms_within)
 
 
+def pct(num: float, den: float) -> float:
+    return 100 * num / den if den and np.isfinite(den) and abs(den) > 1e-12 else np.nan
+
+
+def worse_than(value: float, ref: float, direction) -> bool:
+    """True όταν η τιμή είναι χειρότερη από το oracle. Αν ένα σενάριο φτάνει ή ξεπερνά
+    το oracle (π.χ. MAE διάρκειας), το «% του gap» δεν έχει νόημα και δεν δίνεται."""
+    if direction is None or not np.isfinite(ref):
+        return False
+    return value > ref if direction == "low" else value < ref
+
+
 def better(diff: float, cis: list, first: str, second: str, direction) -> str:
     """Ποιο σενάριο είναι καλύτερο, μόνο όταν ΚΑΝΕΝΑ από τα διαθέσιμα CI (bootstrap,
     Welch) δεν περιέχει το 0."""
@@ -205,12 +226,15 @@ def main() -> None:
                  if c not in known and c not in skip]
         metrics = METRICS + extra
 
+    ref_label = "D" if "D" in present else "R-D"
     summary, contrasts, variance = [], [], []
     for k, (metric, label, direction) in enumerate(metrics):
         rng = np.random.default_rng(SAMPLING_SEED + k)
         V = {s: grid(runs, s, metric) for s in present}
         M = {s: model_means(V[s]) for s in present}
         boots = {s: boot_means(V[s], args.boot, rng) for s in present}
+        ref = (M["D"].mean() if "D" in present
+               else real.loc["D", metric] if "D" in real.index else np.nan)
 
         for s in present:
             lo, hi = ci(boots[s])
@@ -226,6 +250,9 @@ def main() -> None:
                 if V[s].shape[1] > 1 else np.nan,
                 "real": r_val, "delta": M[s].mean() - r_val, "delta_ci_low": d_lo,
                 "delta_ci_high": d_hi,
+                "gap_ref": ref_label, "gap": M[s].mean() - ref if s != "D" else np.nan,
+                "delta_pct_gap": (pct(M[s].mean() - r_val, M[s].mean() - ref)
+                                  if s != "D" and worse_than(M[s].mean(), ref, direction) else np.nan),
             })
             total = var_t + var_g
             variance.append({"metric": metric, "scenario": s, "var_train": var_t,
@@ -249,6 +276,10 @@ def main() -> None:
                 "welch_excludes_0": not np.isnan(w_lo) and not (w_lo <= 0 <= w_hi),
                 "cliffs_delta": delta, "cliffs_size": cliffs_label(delta),
                 "winner": better(diff, [(lo, hi), (w_lo, w_hi)], x, y, direction), "real_gap": real_gap,
+                "pct_gap": (pct(diff, max(abs(M[x].mean() - ref), abs(M[y].mean() - ref)))
+                            if y != "D" and worse_than(M[x].mean(), ref, direction)
+                            and worse_than(M[y].mean(), ref, direction) else np.nan),
+                "gap_ref": ref_label,
             })
 
     summary, contrasts, variance = map(pd.DataFrame, (summary, contrasts, variance))
@@ -260,6 +291,8 @@ def main() -> None:
     # ---------------- εκτύπωση ----------------
     pd.set_option("display.width", 200)
     print("\n===== Scenario means [95% hierarchical bootstrap CI]; delta = synthetic - real =====")
+    print(f"(% gap = share of the distance to the oracle; reference: {ref_label}"
+          + ("" if ref_label == "D" else ", provisional until scenario D is evaluated") + ")")
     for metric, label, direction in METRICS:
         s = summary[summary.metric == metric]
         if s.empty:
@@ -270,17 +303,19 @@ def main() -> None:
             sd = (f"sd models {r.sd_models:.4f} | sd gens {r.sd_generations:.4f}"
                   if not np.isnan(r.sd_models) else "")
             print(f"  {r.scenario}: {r['mean']:.4f} [{r.ci_low:.4f}, {r.ci_high:.4f}]  "
-                  f"real {r.real:.4f}  delta {r.delta:+.4f} [{r.delta_ci_low:+.4f}, {r.delta_ci_high:+.4f}]  {sd}")
+                  f"real {r.real:.4f}  delta {r.delta:+.4f} [{r.delta_ci_low:+.4f}, {r.delta_ci_high:+.4f}]"
+                  f"{'' if np.isnan(r.delta_pct_gap) else f' ({r.delta_pct_gap:+.1f}% gap)'}  {sd}")
 
     if not contrasts.empty:
-        print("\n===== Contrasts: diff [bootstrap CI] | Welch CI | Cliff's delta | winner | real gap =====")
+        print("\n===== Contrasts: diff [bootstrap CI] | % gap | Welch CI | Cliff's delta | winner | real gap =====")
         for metric, label, _ in METRICS:
             c = contrasts[contrasts.metric == metric]
             if c.empty:
                 continue
             print(f"\n{label}")
             for _, r in c.iterrows():
-                print(f"  {r.contrast:4s} {r['diff']:+.4f} [{r.ci_low:+.4f}, {r.ci_high:+.4f}]"
+                g = "      -" if np.isnan(r.pct_gap) else f"{r.pct_gap:+6.1f}%"
+                print(f"  {r.contrast:4s} {r['diff']:+.4f} [{r.ci_low:+.4f}, {r.ci_high:+.4f}] | {g}"
                       f" | Welch [{r.welch_low:+.4f}, {r.welch_high:+.4f}]"
                       f" | d {r.cliffs_delta:+.2f} ({r.cliffs_size}) | {r.winner:2s}"
                       f" | real {r.real_gap:+.4f}")
