@@ -1,0 +1,66 @@
+﻿London test: 200,000 rows
+
+===== tabddpm_B_s42_g1 (200,000 rows) =====
+  fidelity: mean TVD 0.1607 | mean KS 0.1750 | Corr.Sim 0.9642 | Cont.Sim 0.7211 | TVD month x day 0.1997
+  detection AUC 0.8826 | without month/day 0.8611
+  TSTR duration: MAE 5.267 (R2 0.388) | without distance MAE 8.857 (R2 -0.133)
+  TSTR bike type: AUC 0.6834 | TSTR distance: MAE 1.564 km (R2 -0.213)
+  impossible speed 0.38% | e-bike 70.5% | round trip 1.9% | coverage hour x day 1.000
+
+===== tabddpm_B_s42_g2 (200,000 rows) =====
+  fidelity: mean TVD 0.1613 | mean KS 0.1758 | Corr.Sim 0.9650 | Cont.Sim 0.7209 | TVD month x day 0.2005
+  detection AUC 0.8822 | without month/day 0.8611
+  TSTR duration: MAE 5.296 (R2 0.385) | without distance MAE 8.836 (R2 -0.127)
+  TSTR bike type: AUC 0.6845 | TSTR distance: MAE 1.556 km (R2 -0.195)
+  impossible speed 0.40% | e-bike 70.3% | round trip 1.8% | coverage hour x day 1.000
+
+===== tabddpm_B_s42_g3 (200,000 rows) =====
+  fidelity: mean TVD 0.1603 | mean KS 0.1765 | Corr.Sim 0.9658 | Cont.Sim 0.7215 | TVD month x day 0.2002
+  detection AUC 0.8821 | without month/day 0.8609
+  TSTR duration: MAE 5.241 (R2 0.392) | without distance MAE 8.834 (R2 -0.131)
+  TSTR bike type: AUC 0.6833 | TSTR distance: MAE 1.568 km (R2 -0.228)
+  impossible speed 0.38% | e-bike 70.4% | round trip 1.8% | coverage hour x day 1.000
+
+===== tabddpm_B_s43_g1 (200,000 rows) =====
+  fidelity: mean TVD 0.1607 | mean KS 0.1930 | Corr.Sim 0.9650 | Cont.Sim 0.7212 | TVD month x day 0.1984
+  detection AUC 0.8850 | without month/day 0.8647
+  TSTR duration: MAE 5.280 (R2 0.385) | without distance MAE 8.907 (R2 -0.155)
+  TSTR bike type: AUC 0.6820 | TSTR distance: MAE 1.583 km (R2 -0.254)
+  impossible speed 0.34% | e-bike 70.4% | round trip 1.9% | coverage hour x day 1.000
+
+===== tabddpm_B_s43_g2 (200,000 rows) =====
+  fidelity: mean TVD 0.1614 | mean KS 0.1935 | Corr.Sim 0.9656 | Cont.Sim 0.7208 | TVD month x day 0.1990
+  detection AUC 0.8847 | without month/day 0.8646
+  TSTR duration: MAE 5.303 (R2 0.385) | without distance MAE 8.892 (R2 -0.149)
+  TSTR bike type: AUC 0.6830 | TSTR distance: MAE 1.571 km (R2 -0.224)
+  impossible speed 0.36% | e-bike 70.3% | round trip 1.9% | coverage hour x day 1.000
+
+===== tabddpm_B_s43_g3 (200,000 rows) =====
+  fidelity: mean TVD 0.1603 | mean KS 0.1941 | Corr.Sim 0.9666 | Cont.Sim 0.7216 | TVD month x day 0.1986
+  detection AUC 0.8840 | without month/day 0.8642
+  TSTR duration: MAE 5.261 (R2 0.389) | without distance MAE 8.902 (R2 -0.154)
+  TSTR bike type: AUC 0.6823 | TSTR distance: MAE 1.583 km (R2 -0.252)
+  impossible speed 0.34% | e-bike 70.3% | round trip 1.9% | coverage hour x day 1.000
+
+===== tabddpm_B_s44_g1 (200,000 rows) =====
+  fidelity: mean TVD 0.1614 | mean KS 0.1745 | Corr.Sim 0.9669 | Cont.Sim 0.7207 | TVD month x day 0.2004
+  detection AUC 0.8823 | without month/day 0.8607
+  TSTR duration: MAE 5.288 (R2 0.390) | without distance MAE 8.851 (R2 -0.129)
+  TSTR bike type: AUC 0.6826 | TSTR distance: MAE 1.561 km (R2 -0.202)
+  impossible speed 0.35% | e-bike 70.2% | round trip 1.9% | coverage hour x day 1.000
+
+===== tabddpm_B_s44_g2 (200,000 rows) =====
+  fidelity: mean TVD 0.1620 | mean KS 0.1749 | Corr.Sim 0.9676 | Cont.Sim 0.7206 | TVD month x day 0.2003
+  detection AUC 0.8827 | without month/day 0.8608
+  TSTR duration: MAE 5.320 (R2 0.384) | without distance MAE 8.842 (R2 -0.126)
+  TSTR bike type: AUC 0.6837 | TSTR distance: MAE 1.554 km (R2 -0.189)
+  impossible speed 0.34% | e-bike 70.1% | round trip 1.9% | coverage hour x day 1.000
+
+===== tabddpm_B_s44_g3 (200,000 rows) =====
+  fidelity: mean TVD 0.1612 | mean KS 0.1757 | Corr.Sim 0.9683 | Cont.Sim 0.7212 | TVD month x day 0.1998
+  detection AUC 0.8819 | without month/day 0.8604
+  TSTR duration: MAE 5.273 (R2 0.390) | without distance MAE 8.856 (R2 -0.134)
+  TSTR bike type: AUC 0.6834 | TSTR distance: MAE 1.564 km (R2 -0.213)
+  impossible speed 0.33% | e-bike 70.1% | round trip 1.8% | coverage hour x day 1.000
+
+Saved artifacts\evaluation\metrics.csv (35 datasets)

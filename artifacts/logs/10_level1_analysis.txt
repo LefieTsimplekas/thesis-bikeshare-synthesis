@@ -1,6 +1,7 @@
 ﻿Not used (no seed in name): tabddpm_A, tabddpm_B, tabddpm_C, tabddpm_D
-Seeded runs: 18
+Seeded runs: 27
   A: 3 models, 9 runs  {42: [1, 2, 3], 43: [1, 2, 3], 44: [1, 2, 3]}
+  B: 3 models, 9 runs  {42: [1, 2, 3], 43: [1, 2, 3], 44: [1, 2, 3]}
   C: 3 models, 9 runs  {42: [1, 2, 3], 43: [1, 2, 3], 44: [1, 2, 3]}
 
 ===== Scenario means [95% hierarchical bootstrap CI]; delta = synthetic - real =====
@@ -8,112 +9,151 @@ Seeded runs: 18
 
 Detection AUC (no calendar) (lower is better)
   A: 0.8071 [0.8065, 0.8077]  real 0.8080  delta -0.0010 [-0.0016, -0.0003] (-0.3% gap)  sd models 0.0006 | sd gens 0.0003
+  B: 0.8621 [0.8607, 0.8645]  real 0.8619  delta +0.0002 [-0.0012, +0.0026] (+0.1% gap)  sd models 0.0021 | sd gens 0.0002
   C: 0.8138 [0.8124, 0.8147]  real 0.8140  delta -0.0002 [-0.0016, +0.0007] (-0.1% gap)  sd models 0.0013 | sd gens 0.0004
 
 Mean TVD (categorical) (lower is better)
   A: 0.1500 [0.1498, 0.1502]  real 0.1497  delta +0.0003 [+0.0000, +0.0005] (+0.2% gap)  sd models 0.0001 | sd gens 0.0004
+  B: 0.1610 [0.1606, 0.1615]  real 0.1613  delta -0.0002 [-0.0007, +0.0003] (-0.2% gap)  sd models 0.0004 | sd gens 0.0005
   C: 0.1410 [0.1402, 0.1418]  real 0.1411  delta -0.0001 [-0.0009, +0.0007] (-0.1% gap)  sd models 0.0008 | sd gens 0.0004
 
 Mean KS (continuous) (lower is better)
   A: 0.1391 [0.1381, 0.1403]  real 0.1369  delta +0.0022 [+0.0012, +0.0034] (+1.6% gap)  sd models 0.0011 | sd gens 0.0008
-  C: 0.1620 [0.1589, 0.1674]  real 0.1620  delta -0.0000 [-0.0031, +0.0054] (-0.0% gap)  sd models 0.0048 | sd gens 0.0007
+  B: 0.1815 [0.1750, 0.1935]  real 0.1843  delta -0.0029 [-0.0093, +0.0091] (-1.6% gap)  sd models 0.0105 | sd gens 0.0006
+  C: 0.1620 [0.1588, 0.1674]  real 0.1620  delta -0.0000 [-0.0032, +0.0054] (-0.0% gap)  sd models 0.0048 | sd gens 0.0007
 
 Mean W1 norm. (continuous) (lower is better)
   A: 0.2110 [0.2101, 0.2120]  real 0.2061  delta +0.0048 [+0.0039, +0.0058] (+2.4% gap)  sd models 0.0006 | sd gens 0.0016
+  B: 0.3080 [0.2959, 0.3303]  real 0.3116  delta -0.0037 [-0.0157, +0.0187] (-1.2% gap)  sd models 0.0196 | sd gens 0.0013
   C: 0.2553 [0.2487, 0.2671]  real 0.2559  delta -0.0006 [-0.0072, +0.0113] (-0.2% gap)  sd models 0.0104 | sd gens 0.0013
 
 Contingency similarity (higher is better)
   A: 0.7592 [0.7588, 0.7596]  real 0.7588  delta +0.0004 [-0.0001, +0.0008] (-0.2% gap)  sd models 0.0004 | sd gens 0.0005
-  C: 0.7637 [0.7628, 0.7646]  real 0.7632  delta +0.0006 [-0.0003, +0.0014] (-0.3% gap)  sd models 0.0009 | sd gens 0.0005
+  B: 0.7211 [0.7208, 0.7213]  real 0.7202  delta +0.0009 [+0.0006, +0.0011] (-0.4% gap)  sd models 0.0002 | sd gens 0.0003
+  C: 0.7637 [0.7628, 0.7646]  real 0.7632  delta +0.0006 [-0.0004, +0.0014] (-0.3% gap)  sd models 0.0009 | sd gens 0.0005
 
 Correlation similarity (higher is better)
   A: 0.9774 [0.9760, 0.9792]  real 0.9762  delta +0.0012 [-0.0002, +0.0030] (-5.8% gap)  sd models 0.0017 | sd gens 0.0006
-  C: 0.9953 [0.9938, 0.9971]  real 0.9965  delta -0.0013 [-0.0027, +0.0006] (+37.9% gap)  sd models 0.0017 | sd gens 0.0007
+  B: 0.9661 [0.9650, 0.9675]  real 0.9675  delta -0.0014 [-0.0025, +0.0000] (+4.2% gap)  sd models 0.0013 | sd gens 0.0008
+  C: 0.9953 [0.9938, 0.9971]  real 0.9965  delta -0.0013 [-0.0027, +0.0005] (+37.9% gap)  sd models 0.0017 | sd gens 0.0007
 
 Association matrix diff. (Frobenius) (lower is better)
   A: 0.3453 [0.3439, 0.3467]  real 0.3513  delta -0.0060 [-0.0074, -0.0046] (-2.6% gap)  sd models 0.0011 | sd gens 0.0018
-  C: 0.3325 [0.3292, 0.3351]  real 0.3288  delta +0.0036 [+0.0004, +0.0063] (+1.7% gap)  sd models 0.0029 | sd gens 0.0020
+  B: 0.3050 [0.3011, 0.3087]  real 0.2963  delta +0.0086 [+0.0047, +0.0124] (+4.5% gap)  sd models 0.0014 | sd gens 0.0069
+  C: 0.3325 [0.3292, 0.3350]  real 0.3288  delta +0.0036 [+0.0004, +0.0062] (+1.7% gap)  sd models 0.0029 | sd gens 0.0020
 
 TSTR duration R2 (higher is better)
   A: 0.4018 [0.4012, 0.4023]  real 0.4004  delta +0.0015 [+0.0008, +0.0019] (-4.9% gap)  sd models 0.0004 | sd gens 0.0008
-  C: 0.4031 [0.4019, 0.4041]  real 0.4053  delta -0.0022 [-0.0034, -0.0012] (+7.9% gap)  sd models 0.0002 | sd gens 0.0020
+  B: 0.3876 [0.3858, 0.3895]  real 0.3900  delta -0.0024 [-0.0042, -0.0005] (+5.4% gap)  sd models 0.0012 | sd gens 0.0029
+  C: 0.4031 [0.4019, 0.4041]  real 0.4053  delta -0.0022 [-0.0035, -0.0012] (+7.9% gap)  sd models 0.0002 | sd gens 0.0020
 
 TSTR duration MAE (min) (lower is better)
   A: 5.3397 [5.3270, 5.3560]  real 5.3401  delta -0.0003 [-0.0131, +0.0159] (-1.3% gap)  sd models 0.0152 | sd gens 0.0095
-  C: 5.2219 [5.1853, 5.2482]  real 5.2442  delta -0.0223 [-0.0589, +0.0040]  sd models 0.0349 | sd gens 0.0143
+  B: 5.2809 [5.2632, 5.2978]  real 5.3010  delta -0.0201 [-0.0378, -0.0032]  sd models 0.0129 | sd gens 0.0243
+  C: 5.2219 [5.1842, 5.2481]  real 5.2442  delta -0.0223 [-0.0600, +0.0040]  sd models 0.0349 | sd gens 0.0143
 
 TSTR bike type AUC (higher is better)
   A: 0.6614 [0.6600, 0.6625]  real 0.6573  delta +0.0042 [+0.0028, +0.0052] (-7.2% gap)  sd models 0.0013 | sd gens 0.0010
-  C: 0.6706 [0.6700, 0.6712]  real 0.6708  delta -0.0002 [-0.0008, +0.0005] (+0.3% gap)  sd models 0.0006 | sd gens 0.0006
+  B: 0.6831 [0.6825, 0.6838]  real 0.6826  delta +0.0005 [-0.0002, +0.0012] (-1.4% gap)  sd models 0.0006 | sd gens 0.0006
+  C: 0.6706 [0.6700, 0.6713]  real 0.6708  delta -0.0002 [-0.0008, +0.0005] (+0.3% gap)  sd models 0.0006 | sd gens 0.0006
 
 TSTR distance MAE (km) (lower is better)
   A: 1.5367 [1.5350, 1.5383]  real 1.5357  delta +0.0010 [-0.0007, +0.0026] (+1.9% gap)  sd models 0.0016 | sd gens 0.0017
+  B: 1.5671 [1.5586, 1.5778]  real 1.5676  delta -0.0005 [-0.0091, +0.0102] (-0.6% gap)  sd models 0.0105 | sd gens 0.0062
   C: 1.5320 [1.5295, 1.5351]  real 1.5347  delta -0.0027 [-0.0052, +0.0004] (-5.9% gap)  sd models 0.0028 | sd gens 0.0020
 
 W1 speed (km/h) (lower is better)
   A: 1.3181 [1.2591, 1.3674]  real 1.3892  delta -0.0711 [-0.1302, -0.0218] (-5.6% gap)  sd models 0.0557 | sd gens 0.0084
-  C: 1.5810 [1.5476, 1.6259]  real 1.5025  delta +0.0785 [+0.0451, +0.1234] (+5.1% gap)  sd models 0.0423 | sd gens 0.0125
+  B: 1.6896 [1.6364, 1.7742]  real 1.6226  delta +0.0670 [+0.0138, +0.1516] (+4.1% gap)  sd models 0.0750 | sd gens 0.0105
+  C: 1.5810 [1.5480, 1.6259]  real 1.5025  delta +0.0785 [+0.0454, +0.1234] (+5.1% gap)  sd models 0.0423 | sd gens 0.0125
 
 % impossible speed (descriptive)
   A: 0.5030 [0.4514, 0.5659]  real 0.5473  delta -0.0444 [-0.0959, +0.0186]  sd models 0.0616 | sd gens 0.0254
-  C: 0.4496 [0.4338, 0.4640]  real 0.4380  delta +0.0116 [-0.0042, +0.0260]  sd models 0.0121 | sd gens 0.0188
+  B: 0.3590 [0.3407, 0.3871]  real 0.4038  delta -0.0448 [-0.0631, -0.0167]  sd models 0.0263 | sd gens 0.0099
+  C: 0.4496 [0.4336, 0.4644]  real 0.4380  delta +0.0116 [-0.0044, +0.0264]  sd models 0.0121 | sd gens 0.0188
 
 ===== Contrasts: diff [bootstrap CI] | % gap | Welch CI | Cliff's delta | winner | real gap =====
 
 Detection AUC (no calendar)
+  A-B  -0.0550 [-0.0573, -0.0533] |  -15.2% | Welch [-0.0597, -0.0503] | d -1.00 (large) | A  | real -0.0538
   A-C  -0.0067 [-0.0079, -0.0053] |   -2.1% | Welch [-0.0094, -0.0041] | d -1.00 (large) | A  | real -0.0060
+  B-C  +0.0483 [+0.0462, +0.0507] |  +13.4% | Welch [+0.0440, +0.0526] | d +1.00 (large) | C  | real +0.0479
 
 Mean TVD (categorical)
+  A-B  -0.0110 [-0.0116, -0.0105] |   -7.3% | Welch [-0.0120, -0.0100] | d -1.00 (large) | A  | real -0.0115
   A-C  +0.0090 [+0.0082, +0.0098] |   +6.5% | Welch [+0.0070, +0.0110] | d +1.00 (large) | C  | real +0.0087
+  B-C  +0.0200 [+0.0191, +0.0209] |  +13.3% | Welch [+0.0183, +0.0217] | d +1.00 (large) | C  | real +0.0202
 
 Mean KS (continuous)
-  A-C  -0.0229 [-0.0281, -0.0192] |  -14.4% | Welch [-0.0340, -0.0117] | d -1.00 (large) | A  | real -0.0251
+  A-B  -0.0423 [-0.0542, -0.0354] |  -23.8% | Welch [-0.0679, -0.0168] | d -1.00 (large) | A  | real -0.0474
+  A-C  -0.0229 [-0.0280, -0.0192] |  -14.4% | Welch [-0.0340, -0.0117] | d -1.00 (large) | A  | real -0.0251
+  B-C  +0.0195 [+0.0104, +0.0312] |  +10.9% | Welch [-0.0025, +0.0414] | d +1.00 (large) | -  | real +0.0223
 
 Mean W1 norm. (continuous)
+  A-B  -0.0970 [-0.1193, -0.0847] |  -32.2% | Welch [-0.1456, -0.0484] | d -1.00 (large) | A  | real -0.1055
   A-C  -0.0443 [-0.0561, -0.0374] |  -17.8% | Welch [-0.0701, -0.0185] | d -1.00 (large) | A  | real -0.0497
+  B-C  +0.0527 [+0.0348, +0.0746] |  +17.5% | Welch [+0.0122, +0.0931] | d +1.00 (large) | C  | real +0.0557
 
 Contingency similarity
-  A-C  -0.0046 [-0.0055, -0.0035] |   -2.2% | Welch [-0.0065, -0.0026] | d -1.00 (large) | C  | real -0.0043
+  A-B  +0.0381 [+0.0376, +0.0386] |  +15.4% | Welch [+0.0374, +0.0388] | d +1.00 (large) | A  | real +0.0386
+  A-C  -0.0046 [-0.0055, -0.0036] |   -2.2% | Welch [-0.0065, -0.0026] | d -1.00 (large) | C  | real -0.0043
+  B-C  -0.0427 [-0.0435, -0.0417] |  -17.3% | Welch [-0.0448, -0.0405] | d -1.00 (large) | C  | real -0.0430
 
 Correlation similarity
+  A-B  +0.0113 [+0.0093, +0.0133] |  +34.8% | Welch [+0.0078, +0.0148] | d +1.00 (large) | A  | real +0.0087
   A-C  -0.0179 [-0.0201, -0.0156] |  -84.3% | Welch [-0.0217, -0.0140] | d -1.00 (large) | C  | real -0.0203
+  B-C  -0.0292 [-0.0312, -0.0272] |  -89.8% | Welch [-0.0327, -0.0256] | d -1.00 (large) | C  | real -0.0290
 
 Association matrix diff. (Frobenius)
+  A-B  +0.0403 [+0.0362, +0.0445] |  +17.5% | Welch [+0.0374, +0.0432] | d +1.00 (large) | B  | real +0.0550
   A-C  +0.0128 [+0.0098, +0.0161] |   +5.6% | Welch [+0.0064, +0.0192] | d +1.00 (large) | C  | real +0.0225
+  B-C  -0.0275 [-0.0322, -0.0226] |  -12.6% | Welch [-0.0337, -0.0214] | d -1.00 (large) | B  | real -0.0325
 
 TSTR duration R2
+  A-B  +0.0142 [+0.0122, +0.0162] |  +32.4% | Welch [+0.0116, +0.0168] | d +1.00 (large) | A  | real +0.0104
   A-C  -0.0013 [-0.0025, +0.0000] |   -4.3% | Welch [-0.0022, -0.0003] | d -1.00 (large) | -  | real -0.0050
+  B-C  -0.0155 [-0.0176, -0.0133] |  -35.3% | Welch [-0.0184, -0.0126] | d -1.00 (large) | C  | real -0.0154
 
 TSTR duration MAE (min)
-  A-C  +0.1178 [+0.0856, +0.1559] |       - | Welch [+0.0438, +0.1919] | d +1.00 (large) | C  | real +0.0959
+  A-B  +0.0588 [+0.0361, +0.0823] |       - | Welch [+0.0266, +0.0911] | d +1.00 (large) | B  | real +0.0391
+  A-C  +0.1178 [+0.0857, +0.1566] |       - | Welch [+0.0438, +0.1919] | d +1.00 (large) | C  | real +0.0959
+  B-C  +0.0590 [+0.0247, +0.0975] |       - | Welch [-0.0169, +0.1350] | d +1.00 (large) | -  | real +0.0568
 
 TSTR bike type AUC
+  A-B  -0.0217 [-0.0232, -0.0204] |  -37.5% | Welch [-0.0244, -0.0190] | d -1.00 (large) | B  | real -0.0254
   A-C  -0.0092 [-0.0107, -0.0079] |  -15.9% | Welch [-0.0119, -0.0065] | d -1.00 (large) | C  | real -0.0135
+  B-C  +0.0125 [+0.0116, +0.0134] |  +25.7% | Welch [+0.0111, +0.0139] | d +1.00 (large) | B  | real +0.0118
 
 TSTR distance MAE (km)
-  A-C  +0.0047 [+0.0014, +0.0079] |   +9.3% | Welch [-0.0011, +0.0104] | d +0.78 (large) | -  | real +0.0010
+  A-B  -0.0305 [-0.0415, -0.0217] |  -37.6% | Welch [-0.0558, -0.0052] | d -1.00 (large) | A  | real -0.0319
+  A-C  +0.0047 [+0.0013, +0.0078] |   +9.3% | Welch [-0.0011, +0.0104] | d +0.78 (large) | -  | real +0.0010
+  B-C  +0.0351 [+0.0260, +0.0464] |  +43.4% | Welch [+0.0111, +0.0592] | d +1.00 (large) | C  | real +0.0329
 
 W1 speed (km/h)
-  A-C  -0.2629 [-0.3286, -0.2008] |  -17.1% | Welch [-0.3782, -0.1476] | d -1.00 (large) | A  | real -0.1133
+  A-B  -0.3715 [-0.4598, -0.2893] |  -22.5% | Welch [-0.5263, -0.2167] | d -1.00 (large) | A  | real -0.2333
+  A-C  -0.2629 [-0.3291, -0.2002] |  -17.1% | Welch [-0.3782, -0.1476] | d -1.00 (large) | A  | real -0.1133
+  B-C  +0.1086 [+0.0358, +0.1927] |   +6.6% | Welch [-0.0453, +0.2625] | d +1.00 (large) | -  | real +0.1201
 
 % impossible speed
-  A-C  +0.0533 [-0.0009, +0.1177] |       - | Welch [-0.0924, +0.1990] | d +0.78 (large) | -  | real +0.1093
+  A-B  +0.1440 [+0.0854, +0.2096] |       - | Welch [+0.0131, +0.2749] | d +1.00 (large) | -  | real +0.1435
+  A-C  +0.0533 [-0.0011, +0.1176] |       - | Welch [-0.0924, +0.1990] | d +0.78 (large) | -  | real +0.1093
+  B-C  -0.0907 [-0.1171, -0.0598] |       - | Welch [-0.1460, -0.0353] | d -1.00 (large) | -  | real -0.0343
 
 ===== Share of variance from training seeds (rest: generation seeds) =====
-scenario                  A     C
-metric                           
-ContingencySimilarity  0.09  0.76
-CorrelationSimilarity  0.89  0.85
-TSTR_MAE               0.69  0.85
-TSTR_R2                0.00  0.00
-TSTR_bike_AUC          0.57  0.38
-TSTR_dist_MAE          0.36  0.61
-W1_speed               0.98  0.92
-assoc_frobenius        0.05  0.64
-detection_AUC_nocal    0.79  0.90
-mean_KS_num            0.59  0.98
-mean_TVD_cat           0.00  0.81
-mean_W1norm_num        0.00  0.98
-pct_impossible_speed   0.85  0.07
+scenario                  A     B     C
+metric                                 
+ContingencySimilarity  0.09  0.00  0.76
+CorrelationSimilarity  0.89  0.72  0.85
+TSTR_MAE               0.69  0.00  0.85
+TSTR_R2                0.00  0.00  0.00
+TSTR_bike_AUC          0.57  0.46  0.38
+TSTR_dist_MAE          0.36  0.72  0.61
+W1_speed               0.98  0.98  0.92
+assoc_frobenius        0.05  0.00  0.64
+detection_AUC_nocal    0.79  0.99  0.90
+mean_KS_num            0.59  1.00  0.98
+mean_TVD_cat           0.00  0.30  0.81
+mean_W1norm_num        0.00  1.00  0.98
+pct_impossible_speed   0.85  0.87  0.07
 
 Saved level1_summary.csv, level1_contrasts.csv, level1_variance.csv in artifacts\evaluation
