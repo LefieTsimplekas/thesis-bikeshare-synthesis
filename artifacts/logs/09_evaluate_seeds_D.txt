@@ -1,0 +1,66 @@
+﻿London test: 200,000 rows
+
+===== tabddpm_D_s42_g1 (200,000 rows) =====
+  fidelity: mean TVD 0.0104 | mean KS 0.0117 | Corr.Sim 0.9995 | Cont.Sim 0.9685 | TVD month x day 0.2004
+  detection AUC 0.6531 | without month/day 0.5476
+  TSTR duration: MAE 5.329 (R2 0.426) | without distance MAE 8.904 (R2 0.025)
+  TSTR bike type: AUC 0.7142 | TSTR distance: MAE 1.494 km (R2 0.060)
+  impossible speed 0.06% | e-bike 18.1% | round trip 2.5% | coverage hour x day 1.000
+
+===== tabddpm_D_s42_g2 (200,000 rows) =====
+  fidelity: mean TVD 0.0106 | mean KS 0.0111 | Corr.Sim 0.9986 | Cont.Sim 0.9682 | TVD month x day 0.1991
+  detection AUC 0.6518 | without month/day 0.5465
+  TSTR duration: MAE 5.346 (R2 0.425) | without distance MAE 8.907 (R2 0.027)
+  TSTR bike type: AUC 0.7114 | TSTR distance: MAE 1.492 km (R2 0.062)
+  impossible speed 0.07% | e-bike 18.1% | round trip 2.5% | coverage hour x day 1.000
+
+===== tabddpm_D_s42_g3 (200,000 rows) =====
+  fidelity: mean TVD 0.0110 | mean KS 0.0106 | Corr.Sim 0.9979 | Cont.Sim 0.9679 | TVD month x day 0.2012
+  detection AUC 0.6534 | without month/day 0.5443
+  TSTR duration: MAE 5.354 (R2 0.424) | without distance MAE 8.889 (R2 0.026)
+  TSTR bike type: AUC 0.7143 | TSTR distance: MAE 1.490 km (R2 0.062)
+  impossible speed 0.07% | e-bike 18.1% | round trip 2.4% | coverage hour x day 1.000
+
+===== tabddpm_D_s43_g1 (200,000 rows) =====
+  fidelity: mean TVD 0.0106 | mean KS 0.0126 | Corr.Sim 1.0000 | Cont.Sim 0.9683 | TVD month x day 0.1985
+  detection AUC 0.6534 | without month/day 0.5506
+  TSTR duration: MAE 5.356 (R2 0.426) | without distance MAE 8.913 (R2 0.026)
+  TSTR bike type: AUC 0.7145 | TSTR distance: MAE 1.493 km (R2 0.060)
+  impossible speed 0.06% | e-bike 18.1% | round trip 2.5% | coverage hour x day 1.000
+
+===== tabddpm_D_s43_g2 (200,000 rows) =====
+  fidelity: mean TVD 0.0110 | mean KS 0.0113 | Corr.Sim 0.9990 | Cont.Sim 0.9680 | TVD month x day 0.1976
+  detection AUC 0.6528 | without month/day 0.5518
+  TSTR duration: MAE 5.369 (R2 0.426) | without distance MAE 8.919 (R2 0.028)
+  TSTR bike type: AUC 0.7139 | TSTR distance: MAE 1.492 km (R2 0.062)
+  impossible speed 0.07% | e-bike 18.0% | round trip 2.5% | coverage hour x day 1.000
+
+===== tabddpm_D_s43_g3 (200,000 rows) =====
+  fidelity: mean TVD 0.0112 | mean KS 0.0110 | Corr.Sim 0.9984 | Cont.Sim 0.9678 | TVD month x day 0.1992
+  detection AUC 0.6530 | without month/day 0.5509
+  TSTR duration: MAE 5.380 (R2 0.425) | without distance MAE 8.906 (R2 0.027)
+  TSTR bike type: AUC 0.7145 | TSTR distance: MAE 1.489 km (R2 0.063)
+  impossible speed 0.05% | e-bike 18.1% | round trip 2.4% | coverage hour x day 1.000
+
+===== tabddpm_D_s44_g1 (200,000 rows) =====
+  fidelity: mean TVD 0.0104 | mean KS 0.0084 | Corr.Sim 0.9988 | Cont.Sim 0.9687 | TVD month x day 0.1991
+  detection AUC 0.6524 | without month/day 0.5477
+  TSTR duration: MAE 5.355 (R2 0.428) | without distance MAE 8.894 (R2 0.028)
+  TSTR bike type: AUC 0.7146 | TSTR distance: MAE 1.489 km (R2 0.061)
+  impossible speed 0.06% | e-bike 18.2% | round trip 2.5% | coverage hour x day 1.000
+
+===== tabddpm_D_s44_g2 (200,000 rows) =====
+  fidelity: mean TVD 0.0107 | mean KS 0.0091 | Corr.Sim 0.9977 | Cont.Sim 0.9683 | TVD month x day 0.1981
+  detection AUC 0.6522 | without month/day 0.5498
+  TSTR duration: MAE 5.375 (R2 0.426) | without distance MAE 8.900 (R2 0.028)
+  TSTR bike type: AUC 0.7128 | TSTR distance: MAE 1.487 km (R2 0.064)
+  impossible speed 0.07% | e-bike 18.2% | round trip 2.5% | coverage hour x day 1.000
+
+===== tabddpm_D_s44_g3 (200,000 rows) =====
+  fidelity: mean TVD 0.0112 | mean KS 0.0080 | Corr.Sim 0.9972 | Cont.Sim 0.9679 | TVD month x day 0.2002
+  detection AUC 0.6530 | without month/day 0.5494
+  TSTR duration: MAE 5.376 (R2 0.427) | without distance MAE 8.882 (R2 0.028)
+  TSTR bike type: AUC 0.7157 | TSTR distance: MAE 1.485 km (R2 0.063)
+  impossible speed 0.07% | e-bike 18.3% | round trip 2.4% | coverage hour x day 1.000
+
+Saved artifacts\evaluation\metrics.csv (44 datasets)
