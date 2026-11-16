@@ -1,0 +1,83 @@
+# Σενάριο D — έξοδος του κελιού 6β σε δύο συνεδρίες Colab (T4).
+# Συνεδρία 1 (Σαβ 14/11, ~22:40–00:30): s42 γένεση, s43 εκπαίδευση και γένεση· η συνεδρία κόπηκε
+# κατά την εκπαίδευση του s44, πριν αποθηκευτεί το μοντέλο.
+# Συνεδρία 2 (Δευ 16/11, ~10:58–11:55): το 6β παρέλειψε τα s42, s43 και εκπαίδευσε/γέννησε το s44.
+
+## Συνεδρία 1
+
+>> src/07_train_tabddpm.py --scenario D --seed 42 --gen-seeds 1 2 3 --generate-only
+[transformers] Disabling PyTorch because PyTorch >= 2.6 is required but found 2.2.2
+[transformers] PyTorch was not found. Models won't be available and only tokenizers, configuration and file/data utilities can be used.
+[KeOps] Compiling cuda jit compiler engine ... OK
+[pyKeOps] Compiling nvrtc binder for python ... OK
+
+===== TabDDPM | scenario D | training seed 42 =====
+Loading models/tabddpm_D.pkl
+Generation seed 1: 200,000 rows in 8.2 min -> data/synthetic/tabddpm_D_s42_g1.parquet
+  synthetic e-bike  18.1% | round trip  2.5% | median duration 13.40 min | median distance  2.67 km
+Generation seed 2: 200,000 rows in 8.2 min -> data/synthetic/tabddpm_D_s42_g2.parquet
+  synthetic e-bike  18.1% | round trip  2.5% | median duration 13.39 min | median distance  2.67 km
+Generation seed 3: 200,000 rows in 8.2 min -> data/synthetic/tabddpm_D_s42_g3.parquet
+  synthetic e-bike  18.1% | round trip  2.4% | median duration 13.37 min | median distance  2.66 km
+
+>> src/07_train_tabddpm.py --scenario D --seed 43 --gen-seeds 1 2 3
+[transformers] Disabling PyTorch because PyTorch >= 2.6 is required but found 2.2.2
+[transformers] PyTorch was not found. Models won't be available and only tokenizers, configuration and file/data utilities can be used.
+[2026-11-14T21:09:49.498042+0000][9504][CRITICAL] Error importing TabularGoggle: No module named 'dgl'
+[2026-11-14T21:09:49.502896+0000][9504][CRITICAL] module disabled: /content/py311/lib/python3.11/site-packages/synthcity/plugins/generic/plugin_goggle.py
+
+===== TabDDPM | scenario D | training seed 43 =====
+Rows 720,809 | batch 4096 | 176 steps/epoch | 114 epochs ≈ 20,064 steps | device cuda | seed 43
+
+Training time 26.3 min (12.7 steps/s)
+Generation seed 1: 200,000 rows in 8.4 min -> data/synthetic/tabddpm_D_s43_g1.parquet
+  train     e-bike  18.1% | round trip  2.5% | median duration 13.27 min | median distance  2.65 km
+  synthetic e-bike  18.1% | round trip  2.5% | median duration 13.46 min | median distance  2.66 km
+Generation seed 2: 200,000 rows in 8.4 min -> data/synthetic/tabddpm_D_s43_g2.parquet
+  synthetic e-bike  18.0% | round trip  2.5% | median duration 13.46 min | median distance  2.66 km
+Generation seed 3: 200,000 rows in 8.3 min -> data/synthetic/tabddpm_D_s43_g3.parquet
+  synthetic e-bike  18.1% | round trip  2.4% | median duration 13.44 min | median distance  2.66 km
+
+>> src/07_train_tabddpm.py --scenario D --seed 44 --gen-seeds 1 2 3
+[transformers] Disabling PyTorch because PyTorch >= 2.6 is required but found 2.2.2
+[transformers] PyTorch was not found. Models won't be available and only tokenizers, configuration and file/data utilities can be used.
+[2026-11-14T22:01:30.929768+0000][23057][CRITICAL] Error importing TabularGoggle: No module named 'dgl'
+[2026-11-14T22:01:30.937058+0000][23057][CRITICAL] module disabled: /content/py311/lib/python3.11/site-packages/synthcity/plugins/generic/plugin_goggle.py
+
+===== TabDDPM | scenario D | training seed 44 =====
+Rows 720,809 | batch 4096 | 176 steps/epoch | 114 epochs ≈ 20,064 steps | device cuda | seed 44
+[η συνεδρία κόπηκε εδώ]
+
+## Συνεδρία 2
+
+D s42: έτοιμο, παραλείπεται
+D s43: έτοιμο, παραλείπεται
+
+>> src/07_train_tabddpm.py --scenario D --seed 44 --gen-seeds 1 2 3
+[transformers] Disabling PyTorch because PyTorch >= 2.6 is required but found 2.2.2
+[transformers] PyTorch was not found. Models won't be available and only tokenizers, configuration and file/data utilities can be used.
+[KeOps] Compiling cuda jit compiler engine ... OK
+[pyKeOps] Compiling nvrtc binder for python ... OK
+[2026-11-16T08:59:38.981716+0000][1485][CRITICAL] Error importing TabularGoggle: No module named 'dgl'
+[2026-11-16T08:59:38.985933+0000][1485][CRITICAL] module disabled: /content/py311/lib/python3.11/site-packages/synthcity/plugins/generic/plugin_goggle.py
+
+===== TabDDPM | scenario D | training seed 44 =====
+Rows 720,809 | batch 4096 | 176 steps/epoch | 114 epochs ≈ 20,064 steps | device cuda | seed 44
+
+Training time 28.8 min (11.6 steps/s)
+Generation seed 1: 200,000 rows in 8.6 min -> data/synthetic/tabddpm_D_s44_g1.parquet
+  train     e-bike  18.1% | round trip  2.5% | median duration 13.27 min | median distance  2.65 km
+  synthetic e-bike  18.2% | round trip  2.5% | median duration 13.37 min | median distance  2.65 km
+Generation seed 2: 200,000 rows in 8.8 min -> data/synthetic/tabddpm_D_s44_g2.parquet
+  synthetic e-bike  18.2% | round trip  2.5% | median duration 13.37 min | median distance  2.66 km
+Generation seed 3: 200,000 rows in 9.0 min -> data/synthetic/tabddpm_D_s44_g3.parquet
+  synthetic e-bike  18.3% | round trip  2.4% | median duration 13.35 min | median distance  2.65 km
+
+Τέλος σε 56 λεπτά
+
+D  s42  μοντέλο ✓   γενέσεις έτοιμες: [1, 2, 3]
+D  s43  μοντέλο ✓   γενέσεις έτοιμες: [1, 2, 3]
+D  s44  μοντέλο ✓   γενέσεις έτοιμες: [1, 2, 3]
+
+Έτοιμα: 9/9 αρχεία · απομένουν ~0.0 ώρες GPU
+Συγχρονισμός Drive και αποσύνδεση runtime...
