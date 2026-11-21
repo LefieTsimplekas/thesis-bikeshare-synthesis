@@ -67,6 +67,7 @@ Run in this order from the repository root (`python src/<script>.py`).
 | 06 | `06_prepare_model_input.py` | Model input tables for A–D and the London test, `schema.json` | local |
 | 06b | `06b_data_quality_report.py` | Missing values in all pipeline files | local |
 | 07 | `07_train_tabddpm.py` | Train TabDDPM per scenario and generate 200,000 trips | **Colab GPU** |
+| 08 | `08_pilot_timing.py` | Level 2 pilot: time CTGAN, TVAE and GaussianCopula (SDV 2.2) on one scenario and estimate GPU hours for plan A (best regime + D) vs plan B (all scenarios). Separate environment from synthcity (needs numpy ≥ 2.1, torch ≥ 2.6 on Python 3.13) | **Colab GPU** (system Python) |
 | 09 | `09_evaluate.py` | Fidelity, detection, TSTR (3 tasks), diversity, plausibility vs the London test | local |
 | 10 | `10_level1_analysis.py` | Level 1 over seeds (unit = trained model): scenario means, Δ vs R-*, A/B/C contrasts and transfer gap vs D with hierarchical bootstrap and Welch CIs, Cliff's δ, variance split training/generation, every Δ and contrast also as % of the transfer gap | local |
 
