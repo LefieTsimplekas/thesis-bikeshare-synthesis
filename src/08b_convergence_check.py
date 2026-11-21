@@ -6,8 +6,12 @@
 Το 08 έδειξε ότι με τις 300 εποχές των Xu et al. (2019) ένα CTGAN στις 720.809
 γραμμές θέλει ~3 ώρες (~430.000 βήματα), ενώ με ίδιο προϋπολογισμό βημάτων με το
 TabDDPM (20.000 βήματα ≈ 14 εποχές) ~12 λεπτά. Εδώ κάθε μοντέλο εκπαιδεύεται στο
-σενάριο C με 14, 50 και 100 εποχές (ένα training seed, μία γένεση), ώστε το 09 να
-δείξει αν περισσότερες εποχές βελτιώνουν ουσιαστικά τα δεδομένα.
+σενάριο C με 14, 50 και 100 εποχές και τρία training seeds (42, 43, 44, μία γένεση
+το καθένα), ώστε το 09 να δείξει αν περισσότερες εποχές βελτιώνουν ουσιαστικά τα
+δεδομένα. Η πρώτη εκτέλεση (21/11) είχε μόνο το seed 42· στο CTGAN το μέσο TVD άλλαξε
+μη μονότονα με τις εποχές (0,154 / 0,183 / 0,167), δηλαδή ο θόρυβος ενός seed ήταν
+μεγαλύτερος από το όριο του κανόνα, γι' αυτό ο κανόνας εφαρμόζεται σε μέσους όρους
+τριών seeds, όπως στο Επίπεδο 1.
 
 Κανόνας απόφασης (ορίστηκε πριν από την εκτέλεση, 21/11): περισσότερες εποχές
 θεωρούνται καλύτερες αν βελτιώνουν κατά περισσότερο από 10% του transfer gap του C
@@ -27,13 +31,16 @@ TabDDPM (20.000 βήματα ≈ 14 εποχές) ~12 λεπτά. Εδώ κάθ�
 
 Χρήση (από τη ρίζα του repo):
   python src/08b_convergence_check.py
-  python src/08b_convergence_check.py --models tvae --epochs 14 --rows 20000   # γρήγορη δοκιμή
+  python src/08b_convergence_check.py --models tvae --epochs 14 --seeds 42 --rows 20000   # γρήγορη δοκιμή
 
-Έξοδοι (ένα αρχείο ανά μοντέλο × εποχές· όσα υπάρχουν ήδη παραλείπονται):
-  data/synthetic/{μοντέλο}_C_e{εποχές}_s42_g1.parquet
-  artifacts/training/{μοντέλο}_C_e{εποχές}_s42.json   (χρόνοι, βήματα, απώλεια ανά εποχή)
+Έξοδοι (ένα σύνολο ανά μοντέλο × εποχές × seed· όσα υπάρχουν ήδη παραλείπονται):
+  data/synthetic/{μοντέλο}_C_e{εποχές}_s{seed}_g1.parquet
+  models/{μοντέλο}_C_e{εποχές}_s{seed}.pkl             (για επαναχρησιμοποίηση στο Επίπεδο 2)
+  artifacts/training/{μοντέλο}_C_e{εποχές}_s{seed}.json (χρόνοι, βήματα, απώλεια ανά εποχή)
+Το seed 42 της πρώτης εκτέλεσης δεν έχει αποθηκευμένο μοντέλο.
+Φόρτωση μοντέλου (SDV 2.2): from sdv.utils import load_synthesizer; load_synthesizer(path)
 Αξιολόγηση μετά, τοπικά:
-  python src/09_evaluate.py --synthetic "data/synthetic/*_C_e*_s42_g1.parquet"
+  python src/09_evaluate.py --synthetic "data/synthetic/*_C_e*_g1.parquet"
 """
 
 from __future__ import annotations
@@ -51,6 +58,7 @@ from config import SAMPLING_SEED
 from model_io import add_derived, load_schema, load_table
 
 SYNTHETIC_DIR = Path("data/synthetic")
+MODELS_DIR = Path("models")
 TRAIN_LOG_DIR = Path("artifacts/training")
 TABLE = "trips"
 N_SYNTH = 200_000
@@ -107,8 +115,8 @@ def loss_table(synth) -> list | None:
     return None if loss is None else loss.to_dict(orient="records")
 
 
-def run_one(model: str, epochs: int, train: pd.DataFrame, schema: dict, metadata, args) -> None:
-    tag = f"{model}_{args.scenario}_e{epochs}_s{args.seed}"
+def run_one(model: str, epochs: int, seed: int, train: pd.DataFrame, schema: dict, metadata, args) -> None:
+    tag = f"{model}_{args.scenario}_e{epochs}_s{seed}"
     out = SYNTHETIC_DIR / f"{tag}_g{args.gen_seed}.parquet"
     if out.exists() and not args.rows:
         print(f"{out.name}: υπάρχει ήδη, παραλείπεται")
@@ -116,12 +124,14 @@ def run_one(model: str, epochs: int, train: pd.DataFrame, schema: dict, metadata
     if args.rows:
         out = SYNTHETIC_DIR / f"{tag}_pilot_g{args.gen_seed}.parquet"
 
-    print(f"\n===== {model} | scenario {args.scenario} | {epochs} epochs | seed {args.seed} =====", flush=True)
+    print(f"\n===== {model} | scenario {args.scenario} | {epochs} epochs | seed {seed} =====", flush=True)
     synth = make(model, metadata, epochs)
-    set_seed(args.seed)
+    set_seed(seed)
     t0 = time.time()
     synth.fit({TABLE: train})
     t_fit = time.time() - t0
+    if not args.rows:
+        synth.save(str(MODELS_DIR / f"{tag}.pkl"))
     steps = epochs * math.ceil(len(train) / BATCH)
     print(f"Training: {t_fit / 60:.1f} min, {steps:,} steps", flush=True)
 
@@ -143,7 +153,7 @@ def run_one(model: str, epochs: int, train: pd.DataFrame, schema: dict, metadata
 
     import sdv
     log = {"model": model, "scenario": args.scenario, "epochs": epochs, "steps": steps,
-           "batch_size": BATCH, "seed": args.seed, "gen_seed": args.gen_seed,
+           "batch_size": BATCH, "seed": seed, "gen_seed": args.gen_seed,
            "train_rows": len(train), "sdv": sdv.__version__,
            "enforce_min_max_values": False, "enforce_rounding": False,
            "fit_minutes": round(t_fit / 60, 2), "gen_minutes": round(t_gen / 60, 2),
@@ -157,18 +167,18 @@ def main() -> None:
     ap.add_argument("--scenario", default="C", choices=["A", "B", "C", "D"])
     ap.add_argument("--models", nargs="+", default=["tvae", "ctgan"], choices=["tvae", "ctgan"])
     ap.add_argument("--epochs", nargs="+", type=int, default=[14, 50, 100])
-    ap.add_argument("--seed", type=int, default=SAMPLING_SEED)
+    ap.add_argument("--seeds", nargs="+", type=int, default=[SAMPLING_SEED, SAMPLING_SEED + 1, SAMPLING_SEED + 2])
     ap.add_argument("--gen-seed", type=int, default=1)
     ap.add_argument("--rows", type=int, default=None, help="μόνο οι πρώτες γραμμές (δοκιμή)")
     args = ap.parse_args()
 
-    for d in (SYNTHETIC_DIR, TRAIN_LOG_DIR):
+    for d in (SYNTHETIC_DIR, MODELS_DIR, TRAIN_LOG_DIR):
         d.mkdir(parents=True, exist_ok=True)
     schema = load_schema()
     cols = list(schema["categorical"]) + schema["continuous"]
     train = to_schema_types(load_table(f"{args.scenario}_train")[cols], schema)
     if args.rows:
-        train = train.sample(n=min(args.rows, len(train)), random_state=args.seed).reset_index(drop=True)
+        train = train.sample(n=min(args.rows, len(train)), random_state=SAMPLING_SEED).reset_index(drop=True)
     metadata = build_metadata(schema)
 
     # TVAE πρώτα (γρηγορότερο), και από τις λίγες προς τις πολλές εποχές, ώστε μια
@@ -176,7 +186,8 @@ def main() -> None:
     t0 = time.time()
     for model in args.models:
         for epochs in sorted(args.epochs):
-            run_one(model, epochs, train, schema, metadata, args)
+            for seed in args.seeds:
+                run_one(model, epochs, seed, train, schema, metadata, args)
     print(f"\nΤέλος σε {(time.time() - t0) / 60:.0f} λεπτά")
 
 
