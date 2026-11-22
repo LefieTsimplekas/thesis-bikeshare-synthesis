@@ -55,6 +55,7 @@ Run in this order from the repository root (`python src/<script>.py`).
 | 01 | `01_build_featured_data.py` | Read monthly files with DuckDB, keep station-to-station trips, time features | local |
 | 01b | `01b_cleaning_checks.py` | Checks on the raw data that justify the cleaning rules | local |
 | 02b, 02c | `02b_station_table.py`, `02c_attach_station_keys.py` | Physical stations (IDs within 25 m merged), station keys on trips | local |
+| 02d | `02d_merge_radius_check.py` | Check of the 25 m ID-merge radius: ID-pair distances up to 100 m, physical stations for radii 5–100 m, distance to the nearest other station (also London BikePoint). Writes only to `artifacts/station_table/` | local |
 | 02 | `02_eda_featured_data.py` | EDA of the featured data, impact of each rule | local |
 | 03 | `03_filtering.py` | Duration 1–100 min, distance 50 m–12 km, speed ≤ 40 km/h | local |
 | 04 | `04_stratified_sampling.py` | Proportional stratified sample of 1M trips (192 strata, hash with seed) | local |
