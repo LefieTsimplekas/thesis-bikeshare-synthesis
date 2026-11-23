@@ -38,6 +38,7 @@
   python src/11_conditional.py mix
   python src/11_conditional.py pool --model models/tvae_C_e14_s42.pkl --rows 1000000
   python src/11_conditional.py resample --pool "data/synthetic/pool/*.parquet" --mix stations rate oracle
+  python src/11_conditional.py coverage
   python src/09_evaluate.py --synthetic "data/synthetic/*_cond-*.parquet"
 
 Έξοδοι:
@@ -46,6 +47,8 @@
   data/synthetic/pool/{tag}_pool.parquet      pools (pool)
   data/synthetic/{tag}_cond-{mix}.parquet     σύνολα με συνθήκη (resample), mix = stations | rate | oracle
   artifacts/conditional/resample_{tag}_cond-{mix}.json   πλήθη ανά τύπο, διπλότυπα
+  artifacts/conditional/type_coverage.csv|_ratio.csv|.json  μερίδιο κάθε τύπου ανά pool έναντι
+                                                train (coverage)· λόγος < 0.25 = χαμηλή κάλυψη
 """
 
 import argparse
@@ -214,12 +217,20 @@ def scenario_of(tag: str) -> str:
     return m.group("sc")
 
 
+def pool_paths(patterns: list[str]) -> list[str]:
+    paths = sorted({p for pat in patterns for p in glob.glob(pat)})
+    if not paths:
+        raise SystemExit(f"Δεν βρέθηκαν αρχεία pool για: {' '.join(patterns)}\n"
+                         f"Έλεγξε ότι τα *_pool.parquet είναι στο {POOL_DIR}/")
+    return paths
+
+
 def cmd_resample(args) -> None:
     mix_path = OUT_DIR / "target_mix.csv"
     if not mix_path.exists():
         raise SystemExit("Τρέξε πρώτα: python src/11_conditional.py mix")
     mix = pd.read_csv(mix_path)
-    paths = sorted({p for pat in args.pool for p in (glob.glob(pat) or [pat])})
+    paths = pool_paths(args.pool)
     for path in paths:
         tag = Path(path).stem.removesuffix("_pool")
         sc = scenario_of(tag)
@@ -243,6 +254,65 @@ def cmd_resample(args) -> None:
 
 
 # ---------------------------------------------------------------------------
+# 4. Κάλυψη τύπων σταθμών ανά μοντέλο (εύρημα για RQ4 και περιορισμός του 1b)
+# ---------------------------------------------------------------------------
+SEED_RE = re.compile(r"_s(\d+)")
+
+
+def cmd_coverage(args) -> None:
+    """Μερίδιο κάθε origin_type στο pool κάθε μοντέλου, δίπλα στο C_train.
+
+    Ratio = μερίδιο στο pool / μερίδιο στο train. Ratio < --low σημαίνει ότι το
+    μοντέλο σχεδόν δεν παράγει τον τύπο (κατάρρευση τρόπων).
+    """
+    train = load_table("C_train")["origin_type"].value_counts(normalize=True)
+    mix = pd.read_csv(OUT_DIR / "target_mix.csv") if (OUT_DIR / "target_mix.csv").exists() else None
+    rows = []
+    for path in pool_paths(args.pool):
+        tag = Path(path).stem.removesuffix("_pool")
+        sc = scenario_of(tag)
+        ref = train if sc == "C" else load_table(f"{sc}_train")["origin_type"].value_counts(normalize=True)
+        counts = pd.read_parquet(path, columns=["origin_type"])["origin_type"].astype(int).value_counts()
+        n = int(counts.sum())
+        seed = SEED_RE.search(tag)
+        for t in sorted(int(x) for x in ref.index):
+            k = int(counts.get(t, 0))
+            need = None
+            if mix is not None:
+                g = mix[(mix.scenario == sc) & (mix.origin_type == t)]
+                if len(g):
+                    need = {m: int(round(float(g[m].iloc[0]) * args.rows)) for m in ["stations", "rate", "oracle"]}
+            rows.append({"tag": tag, "model": tag.split("_")[0], "scenario": sc,
+                         "seed": int(seed.group(1)) if seed else None, "origin_type": t,
+                         "pool_rows": n, "count": k, "share": k / n,
+                         "train_share": float(ref.get(t, 0.0)),
+                         "ratio": (k / n) / float(ref[t]) if ref.get(t, 0) > 0 else np.nan,
+                         "need_stations": need and need["stations"],
+                         "need_rate": need and need["rate"],
+                         "need_oracle": need and need["oracle"]})
+    df = pd.DataFrame(rows)
+    df.to_csv(OUT_DIR / "type_coverage.csv", index=False)
+
+    wide = df.pivot_table(index=["model", "seed"], columns="origin_type", values="ratio")
+    wide.columns = [f"type_{c}" for c in wide.columns]
+    wide.round(3).to_csv(OUT_DIR / "type_coverage_ratio.csv")
+    low = df[df.ratio < args.low]
+    summary = {"low_threshold": args.low,
+               "train_share": {str(k): round(float(v), 4) for k, v in train.sort_index().items()},
+               "low_coverage": low[["tag", "origin_type", "count", "share", "train_share", "ratio"]]
+               .round(5).to_dict(orient="records")}
+    (OUT_DIR / "type_coverage.json").write_text(json.dumps(summary, indent=2), encoding="utf-8")
+
+    pd.set_option("display.width", 160)
+    print("Λόγος μεριδίου pool / C_train ανά τύπο σταθμού (1 = ίδιο με το train):")
+    print(wide.round(2).to_string())
+    print(f"\nΤύποι με λόγο < {args.low}: {len(low)}")
+    for r in low.itertuples():
+        print(f"  {r.tag}: τύπος {r.origin_type}, {r.count:,} γραμμές ({100 * r.share:.3f}% "
+              f"έναντι {100 * r.train_share:.2f}% στο train)")
+
+
+# ---------------------------------------------------------------------------
 def main() -> None:
     ap = argparse.ArgumentParser()
     sub = ap.add_subparsers(dest="cmd", required=True)
@@ -257,9 +327,14 @@ def main() -> None:
     r.add_argument("--rows", type=int, default=N_OUT)
     r.add_argument("--seed", type=int, default=SAMPLING_SEED)
     r.add_argument("--overwrite", action="store_true")
+    c = sub.add_parser("coverage")
+    c.add_argument("--pool", nargs="+", default=[str(POOL_DIR / "*_pool.parquet")])
+    c.add_argument("--rows", type=int, default=N_OUT)
+    c.add_argument("--low", type=float, default=0.25, help="όριο λόγου για «χαμηλή κάλυψη»")
     args = ap.parse_args()
     OUT_DIR.mkdir(parents=True, exist_ok=True)
-    {"mix": cmd_mix, "pool": cmd_pool, "resample": cmd_resample}[args.cmd](args)
+    {"mix": cmd_mix, "pool": cmd_pool, "resample": cmd_resample,
+     "coverage": cmd_coverage}[args.cmd](args)
 
 
 if __name__ == "__main__":
